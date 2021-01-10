@@ -375,7 +375,7 @@ if (result != VK_SUCCESS) throw std::runtime_error("Could not allocate memory ch
 	My rendering abstractions basically create buffers right with a non-default constructor.
 	If you call <code>BufferClassWithStaging(...)</code> on a <code>BufferClass</code> instance, it'll basically create a GPU-side-only buffer using a temporary staging buffer.
 	It will no longer have any host-side visibility.
-	We have new buffer usage modes and <code>USAGE_DEVICE_ADDRESS</code> will decide whether or not we'll ask our memory manager whether to land our buffer on chunks dedicated to ray-tracing or not.
+	We have new buffer usage modes and <code>USAGE_DEVICE_ADDRESS</code> will decide whether or not we'll ask our memory manager to land our buffer on chunks dedicated to ray-tracing.
 	<code>BufferClassWithStaging(...)</code> is not used here and is only provided for reference. It doesn't change due to this transition.
 	<p/>
 	<div class="panel-holder">
@@ -1172,7 +1172,8 @@ void HIGHOMEGA::GL::KHR_RT::RTGeometry::SetDirty()
 	<p/>
 	<h1>The Scene (TLAS abstraction)</h1>
 	This is the code that handles all top-level scene stuff.<p/>
-	<code>InstanceClass</code> is a Vulkan instance and <code>InstanceProperties</code> is a geometry instance property struct. Don't get them confused.<p/>
+	<code>InstanceClass</code> is a Vulkan instance and <code>InstanceProperties</code> is a geometry instance property struct. Don't get them confused.
+	In that same breath, <code>allInstanceData</code> is populated and used as an instance property buffer (i.e. property fetching during ray hits for example) and isn't for getting the API to function.<p/>
 	You won't necessarily see what will happen to <code>material</code> here. It will be used later to build a variable count descriptor set for materials.<p/>
 	Here's something that might catch your attention. In both <code>Add(...)</code> and <code>Update(...)</code> I'm setting the instance transform to identity.
 	Why you might ask? At some point I decided to back ALL geometry with dedicated (though sub-allocated) buffers. Almost everything is transformed in compute (skinned meshes, rigid bodies, brushes, particles etc.). I don't even think I call <code>Update(...)</code> anywhere anymore.
