@@ -1178,7 +1178,7 @@ void HIGHOMEGA::GL::KHR_RT::RTGeometry::SetDirty()
 	Why you might ask? At some point I decided to back ALL geometry with dedicated (though sub-allocated) buffers. Almost everything is transformed in compute (skinned meshes, rigid bodies, brushes, particles etc.). I don't even think I call <code>Update(...)</code> anywhere anymore.
 	It reduces rework in vertex shaders, especially when rendering the same geometry in different passes; I still do a shadow map for stained glass. Plus that shadow map is needed for sun/moon visiblity with the Compact LBVH pipeline.<p/>
 	You may not -- and probably are not -- doing this. Modifying this code to supply an affine transformation matrix is trivial.<p/>
-	In terms of Vulkan related material, most of what you should focus on is how <code>curInst</code> is set. Especially the fact that a buffer device address is fed in rather than a buffer handle.
+	In terms of Vulkan related material, most of what you should focus on is how <code>curInst</code> is set. Especially the fact that a buffer device address is fed in rather than an acceleration structure handle.
 	The call to <code>GetAccelerationStructureHandle</code> is more or less defensive programming... just making sure the acceleration structure handle is up-to-date in case it wasn't recreated.
 	<div class="panel-holder">
 		<div class="left-panel">
