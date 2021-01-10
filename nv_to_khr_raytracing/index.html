@@ -241,7 +241,7 @@ VkPhysicalDeviceRayTracingPropertiesNV RTXInstance::raytracingProperties = { };
 
 ...
 
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXInstance::Enable(InstanceClass & inpInstance)
+void NVIDIA_RTX::RTXInstance::Enable(InstanceClass & inpInstance)
 {
 	vkCreateAccelerationStructureNV = reinterpret_cast<PFN_vkCreateAccelerationStructureNV>(vkGetDeviceProcAddr(inpInstance.device, "vkCreateAccelerationStructureNV"));
 	vkDestroyAccelerationStructureNV = reinterpret_cast<PFN_vkDestroyAccelerationStructureNV>(vkGetDeviceProcAddr(inpInstance.device, "vkDestroyAccelerationStructureNV"));
@@ -267,7 +267,7 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXInstance::Enable(InstanceClass & inpInstance)
 	rtxEnabled = true;
 }
 
-bool HIGHOMEGA::GL::NVIDIA_RTX::RTXInstance::Enabled()
+bool NVIDIA_RTX::RTXInstance::Enabled()
 {
 	return rtxEnabled;
 }
@@ -323,7 +323,7 @@ VkPhysicalDeviceRayTracingPipelinePropertiesKHR RTInstance::raytracingPipelinePr
 
 ...
 
-void HIGHOMEGA::GL::KHR_RT::RTInstance::Enable(InstanceClass & inpInstance)
+void KHR_RT::RTInstance::Enable(InstanceClass & inpInstance)
 {
 	fpCreateAccelerationStructureKHR = reinterpret_cast<PFN_vkCreateAccelerationStructureKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkCreateAccelerationStructureKHR"));
 	fpDestroyAccelerationStructureKHR = reinterpret_cast<PFN_vkDestroyAccelerationStructureKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkDestroyAccelerationStructureKHR"));
@@ -348,7 +348,7 @@ void HIGHOMEGA::GL::KHR_RT::RTInstance::Enable(InstanceClass & inpInstance)
 	rtEnabled = true;
 }
 
-bool HIGHOMEGA::GL::KHR_RT::RTInstance::Enabled()
+bool KHR_RT::RTInstance::Enabled()
 {
 	return rtEnabled;
 }
@@ -496,7 +496,7 @@ BufferClass::BufferClass(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, B
 	}
 }
 
-void HIGHOMEGA::GL::BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void * inpData, unsigned int inpDataSize)
+void BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void * inpData, unsigned int inpDataSize)
 {
 	totalDataSize = inpDataSize;
 
@@ -599,7 +599,7 @@ BufferClass::BufferClass(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, B
 	}
 }
 
-void HIGHOMEGA::GL::BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void * inpData, unsigned int inpDataSize)
+void BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void * inpData, unsigned int inpDataSize)
 {
 	totalDataSize = inpDataSize;
 
@@ -641,7 +641,7 @@ void HIGHOMEGA::GL::BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharin
 			<div class="panel-heading"><h2>Before...</h2></div>
 			<div class="panel-content">
 			<xmp style="overflow: scroll;">
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::RemovePast()
+void NVIDIA_RTX::RTXAccelStruct::RemovePast()
 {
 	if (!ptrToInstance) return;
 
@@ -653,7 +653,7 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::RemovePast()
 	ptrToInstance = nullptr;
 }
 
-VkDeviceSize HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::GetScratchBufferSize(VkAccelerationStructureNV handle, bool updateAction)
+VkDeviceSize NVIDIA_RTX::RTXAccelStruct::GetScratchBufferSize(VkAccelerationStructureNV handle, bool updateAction)
 {
 	if (!ptrToInstance) throw std::runtime_error("No way to get scratch buffer size: no ptr to Instance.");
 
@@ -670,7 +670,7 @@ VkDeviceSize HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::GetScratchBufferSize(VkA
 	return result;
 }
 
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::CreateAccelStruct(bool isBlas, VkGeometryNV * inpGeom, std::vector <VkGeometryInstance> * instanceData, InstanceClass & inpInstance)
+void NVIDIA_RTX::RTXAccelStruct::CreateAccelStruct(bool isBlas, VkGeometryNV * inpGeom, std::vector <VkGeometryInstance> * instanceData, InstanceClass & inpInstance)
 {
 	ptrToInstance = &inpInstance;
 
@@ -731,7 +731,7 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::CreateAccelStruct(bool isBlas, V
 	SubmitCreateAccelStruct(isBlas, inpGeom, instanceData);
 }
 
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::SubmitCreateAccelStruct(bool isBlas, VkGeometryNV * inpGeom, std::vector <VkGeometryInstance> * instanceData, bool updateAction)
+void NVIDIA_RTX::RTXAccelStruct::SubmitCreateAccelStruct(bool isBlas, VkGeometryNV * inpGeom, std::vector <VkGeometryInstance> * instanceData, bool updateAction)
 {
 	if (!ptrToInstance) throw std::runtime_error("Cannot submit create accel struct request since a ptr to instance was not found");
 
@@ -779,14 +779,14 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::SubmitCreateAccelStruct(bool isB
 	SubmitCommandBuffer();
 }
 
-HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::RTXAccelStruct()
+NVIDIA_RTX::RTXAccelStruct::RTXAccelStruct()
 {
 	hasAccelStruct = false;
 	hasSubAlloc = false;
 	ptrToInstance = nullptr;
 }
 
-HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::~RTXAccelStruct()
+NVIDIA_RTX::RTXAccelStruct::~RTXAccelStruct()
 {
 	RemovePast();
 }
@@ -797,7 +797,7 @@ HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::~RTXAccelStruct()
 			<div class="panel-heading"><h2>After...</h2></div>
 			<div class="panel-content">
 			<xmp style="overflow: scroll;">
-void HIGHOMEGA::GL::KHR_RT::RTAccelStruct::RemovePast()
+void KHR_RT::RTAccelStruct::RemovePast()
 {
 	if (!ptrToInstance) return;
 
@@ -807,7 +807,7 @@ void HIGHOMEGA::GL::KHR_RT::RTAccelStruct::RemovePast()
 	ptrToInstance = nullptr;
 }
 
-void HIGHOMEGA::GL::KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructureGeometryKHR * inpGeom, VkAccelerationStructureBuildRangeInfoKHR * inpGeomOffset, std::vector <VkAccelerationStructureInstanceKHR> * instanceData, InstanceClass & inpInstance)
+void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructureGeometryKHR * inpGeom, VkAccelerationStructureBuildRangeInfoKHR * inpGeomOffset, std::vector <VkAccelerationStructureInstanceKHR> * instanceData, InstanceClass & inpInstance)
 {
 	ptrToInstance = &inpInstance;
 
@@ -943,7 +943,7 @@ void HIGHOMEGA::GL::KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAcce
 	}
 }
 
-void HIGHOMEGA::GL::KHR_RT::RTAccelStruct::UpdateAccelStruct(bool isBlas, VkAccelerationStructureGeometryKHR * inpGeom, VkAccelerationStructureBuildRangeInfoKHR * inpGeomOffset, std::vector <VkAccelerationStructureInstanceKHR> * instanceData)
+void KHR_RT::RTAccelStruct::UpdateAccelStruct(bool isBlas, VkAccelerationStructureGeometryKHR * inpGeom, VkAccelerationStructureBuildRangeInfoKHR * inpGeomOffset, std::vector <VkAccelerationStructureInstanceKHR> * instanceData)
 {
 	if (!ptrToInstance) throw std::runtime_error("Cannot submit create accel struct request since a ptr to instance was not found");
 
@@ -1037,13 +1037,13 @@ void HIGHOMEGA::GL::KHR_RT::RTAccelStruct::UpdateAccelStruct(bool isBlas, VkAcce
 	}
 }
 
-HIGHOMEGA::GL::KHR_RT::RTAccelStruct::RTAccelStruct()
+KHR_RT::RTAccelStruct::RTAccelStruct()
 {
 	hasAccelStruct = false;
 	ptrToInstance = nullptr;
 }
 
-HIGHOMEGA::GL::KHR_RT::RTAccelStruct::~RTAccelStruct()
+KHR_RT::RTAccelStruct::~RTAccelStruct()
 {
 	RemovePast();
 }
@@ -1062,21 +1062,21 @@ HIGHOMEGA::GL::KHR_RT::RTAccelStruct::~RTAccelStruct()
 			<div class="panel-heading"><h2>Before...</h2></div>
 			<div class="panel-content">
 			<xmp style="overflow: scroll;">
-HIGHOMEGA::GL::NVIDIA_RTX::RTXGeometry::RTXGeometry()
+NVIDIA_RTX::RTXGeometry::RTXGeometry()
 {
 	ptrToInstance = nullptr;
 	created = false;
 	dirty = false;
 }
 
-HIGHOMEGA::GL::NVIDIA_RTX::RTXGeometry::~RTXGeometry()
+NVIDIA_RTX::RTXGeometry::~RTXGeometry()
 {
 	ptrToInstance = nullptr;
 	created = false;
 	dirty = false;
 }
 
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXGeometry::SetGeom(BufferClass & vertBuffer, unsigned int vertexSize, bool isAlphaKeyed, InstanceClass & inpInstance)
+void NVIDIA_RTX::RTXGeometry::SetGeom(BufferClass & vertBuffer, unsigned int vertexSize, bool isAlphaKeyed, InstanceClass & inpInstance)
 {
 	if (vertBuffer.getSize() == 0) return;
 
@@ -1108,7 +1108,7 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXGeometry::SetGeom(BufferClass & vertBuffer, u
 	dirty = true;
 }
 
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXGeometry::CreateOrUpdate()
+void NVIDIA_RTX::RTXGeometry::CreateOrUpdate()
 {
 	if (!created)
 	{
@@ -1123,7 +1123,7 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXGeometry::CreateOrUpdate()
 	}
 }
 
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXGeometry::SetDirty()
+void NVIDIA_RTX::RTXGeometry::SetDirty()
 {
 	// This should be called when geometry changes inside a shader...
 	dirty = true;
@@ -1135,21 +1135,21 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXGeometry::SetDirty()
 			<div class="panel-heading"><h2>After...</h2></div>
 			<div class="panel-content">
 			<xmp style="overflow: scroll;">
-HIGHOMEGA::GL::KHR_RT::RTGeometry::RTGeometry()
+KHR_RT::RTGeometry::RTGeometry()
 {
 	ptrToInstance = nullptr;
 	created = false;
 	dirty = false;
 }
 
-HIGHOMEGA::GL::KHR_RT::RTGeometry::~RTGeometry()
+KHR_RT::RTGeometry::~RTGeometry()
 {
 	ptrToInstance = nullptr;
 	created = false;
 	dirty = false;
 }
 
-void HIGHOMEGA::GL::KHR_RT::RTGeometry::SetGeom(BufferClass & vertBuffer, unsigned int vertexSize, bool isAlphaKeyed, InstanceClass & inpInstance)
+void KHR_RT::RTGeometry::SetGeom(BufferClass & vertBuffer, unsigned int vertexSize, bool isAlphaKeyed, InstanceClass & inpInstance)
 {
 	if (vertBuffer.getSize() == 0) return;
 
@@ -1187,7 +1187,7 @@ void HIGHOMEGA::GL::KHR_RT::RTGeometry::SetGeom(BufferClass & vertBuffer, unsign
 	dirty = true;
 }
 
-void HIGHOMEGA::GL::KHR_RT::RTGeometry::CreateOrUpdate()
+void KHR_RT::RTGeometry::CreateOrUpdate()
 {
 	if (!created)
 	{
@@ -1202,7 +1202,7 @@ void HIGHOMEGA::GL::KHR_RT::RTGeometry::CreateOrUpdate()
 	}
 }
 
-void HIGHOMEGA::GL::KHR_RT::RTGeometry::SetDirty()
+void KHR_RT::RTGeometry::SetDirty()
 {
 	// This should be called when geometry changes inside a shader...
 	dirty = true;
@@ -1228,7 +1228,7 @@ void HIGHOMEGA::GL::KHR_RT::RTGeometry::SetDirty()
 			<div class="panel-heading"><h2>Before...</h2></div>
 			<div class="panel-content">
 			<xmp style="overflow: scroll;">
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::RemovePast()
+void NVIDIA_RTX::RTXScene::RemovePast()
 {
 	if (!ptrToInstance) return;
 
@@ -1239,7 +1239,7 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::RemovePast()
 	signifyNewScene = false;
 }
 
-HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::RTXScene()
+NVIDIA_RTX::RTXScene::RTXScene()
 {
 	needUpdate = false;
 	needReCreation = false;
@@ -1248,12 +1248,12 @@ HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::RTXScene()
 	signifyNewScene = false;
 }
 
-HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::~RTXScene()
+NVIDIA_RTX::RTXScene::~RTXScene()
 {
 	RemovePast();
 }
 
-TraceItem HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::Add(std::vector <ImageClass *> & material, RTXGeometry & geom, InstanceProperties & inpInstanceProps, InstanceClass & inpInstance)
+TraceItem NVIDIA_RTX::RTXScene::Add(std::vector <ImageClass *> & material, RTXGeometry & geom, InstanceProperties & inpInstanceProps, InstanceClass & inpInstance)
 {
 	if (!ptrToInstance) ptrToInstance = &inpInstance;
 
@@ -1293,7 +1293,7 @@ TraceItem HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::Add(std::vector <ImageClass *> & 
 	return retVal;
 }
 
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::Update(TraceItem inpTraceItem, InstanceProperties & inpInstanceProps)
+void NVIDIA_RTX::RTXScene::Update(TraceItem inpTraceItem, InstanceProperties & inpInstanceProps)
 {
 	TraceItem & curItem = allTraceItems[inpTraceItem.itemId];
 	for (int i = 0; i != 12; i++)
@@ -1302,13 +1302,13 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::Update(TraceItem inpTraceItem, Instanc
 	needUpdate = true;
 }
 
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::Remove(TraceItem inpTraceItem)
+void NVIDIA_RTX::RTXScene::Remove(TraceItem inpTraceItem)
 {
 	allTraceItems.erase(inpTraceItem.itemId);
 	needReCreation = true;
 }
 
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::CreateOrRecreate()
+void NVIDIA_RTX::RTXScene::CreateOrRecreate()
 {
 	if (createdEssentials) RTXAccelStruct::~RTXAccelStruct();
 	createdEssentials = true;
@@ -1319,7 +1319,7 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::CreateOrRecreate()
 	catch (...) { RemovePast(); throw; }
 }
 
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::CreateInstanceData(std::vector <VkGeometryInstance> & instances)
+void NVIDIA_RTX::RTXScene::CreateInstanceData(std::vector <VkGeometryInstance> & instances)
 {
 	instances.clear();
 	instances.reserve(allTraceItems.size());
@@ -1346,7 +1346,7 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::CreateInstanceData(std::vector <VkGeom
 	instancePropertiesBuffer.UploadSubData(0, allInstanceData.data(), (unsigned int)allInstanceData.size() * sizeof(InstanceProperties));
 }
 
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::Refresh()
+void NVIDIA_RTX::RTXScene::Refresh()
 {
 	for (std::pair <const unsigned long long, TraceItem> & curTraceItemKV : allTraceItems)
 	{
@@ -1389,12 +1389,12 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::Refresh()
 	}
 }
 
-bool HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::IsSceneNew()
+bool NVIDIA_RTX::RTXScene::IsSceneNew()
 {
 	return signifyNewScene;
 }
 
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::MarkSceneOld()
+void NVIDIA_RTX::RTXScene::MarkSceneOld()
 {
 	signifyNewScene = false;
 }
@@ -1405,7 +1405,7 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::MarkSceneOld()
 			<div class="panel-heading"><h2>After...</h2></div>
 			<div class="panel-content">
 			<xmp style="overflow: scroll;">
-void HIGHOMEGA::GL::KHR_RT::RTScene::RemovePast()
+void KHR_RT::RTScene::RemovePast()
 {
 	if (!ptrToInstance) return;
 
@@ -1416,7 +1416,7 @@ void HIGHOMEGA::GL::KHR_RT::RTScene::RemovePast()
 	signifyNewScene = false;
 }
 
-HIGHOMEGA::GL::KHR_RT::RTScene::RTScene()
+KHR_RT::RTScene::RTScene()
 {
 	needUpdate = false;
 	needReCreation = false;
@@ -1425,12 +1425,12 @@ HIGHOMEGA::GL::KHR_RT::RTScene::RTScene()
 	signifyNewScene = false;
 }
 
-HIGHOMEGA::GL::KHR_RT::RTScene::~RTScene()
+KHR_RT::RTScene::~RTScene()
 {
 	RemovePast();
 }
 
-TraceItem HIGHOMEGA::GL::KHR_RT::RTScene::Add(std::vector <ImageClass *> & material, RTGeometry & geom, InstanceProperties & inpInstanceProps, InstanceClass & inpInstance)
+TraceItem KHR_RT::RTScene::Add(std::vector <ImageClass *> & material, RTGeometry & geom, InstanceProperties & inpInstanceProps, InstanceClass & inpInstance)
 {
 	if (!ptrToInstance) ptrToInstance = &inpInstance;
 
@@ -1471,20 +1471,20 @@ TraceItem HIGHOMEGA::GL::KHR_RT::RTScene::Add(std::vector <ImageClass *> & mater
 	return retVal;
 }
 
-void HIGHOMEGA::GL::KHR_RT::RTScene::Update(TraceItem inpTraceItem, InstanceProperties & inpInstanceProps)
+void KHR_RT::RTScene::Update(TraceItem inpTraceItem, InstanceProperties & inpInstanceProps)
 {
 	TraceItem & curItem = allTraceItems[inpTraceItem.itemId];
 	curItem.instanceData = inpInstanceProps;
 	needUpdate = true;
 }
 
-void HIGHOMEGA::GL::KHR_RT::RTScene::Remove(TraceItem inpTraceItem)
+void KHR_RT::RTScene::Remove(TraceItem inpTraceItem)
 {
 	allTraceItems.erase(inpTraceItem.itemId);
 	needReCreation = true;
 }
 
-void HIGHOMEGA::GL::KHR_RT::RTScene::CreateOrRecreate()
+void KHR_RT::RTScene::CreateOrRecreate()
 {
 	if (createdEssentials) RTAccelStruct::~RTAccelStruct();
 	createdEssentials = true;
@@ -1495,7 +1495,7 @@ void HIGHOMEGA::GL::KHR_RT::RTScene::CreateOrRecreate()
 	catch (...) { RemovePast(); throw; }
 }
 
-void HIGHOMEGA::GL::KHR_RT::RTScene::CreateInstanceData(std::vector <VkAccelerationStructureInstanceKHR> & instances)
+void KHR_RT::RTScene::CreateInstanceData(std::vector <VkAccelerationStructureInstanceKHR> & instances)
 {
 	instances.clear();
 	instances.reserve(allTraceItems.size());
@@ -1522,7 +1522,7 @@ void HIGHOMEGA::GL::KHR_RT::RTScene::CreateInstanceData(std::vector <VkAccelerat
 	instancePropertiesBuffer.UploadSubData(0, allInstanceData.data(), (unsigned int)allInstanceData.size() * sizeof(InstanceProperties));
 }
 
-void HIGHOMEGA::GL::KHR_RT::RTScene::Refresh()
+void KHR_RT::RTScene::Refresh()
 {
 	for (std::pair <const unsigned long long, TraceItem> & curTraceItemKV : allTraceItems)
 	{
@@ -1564,12 +1564,12 @@ void HIGHOMEGA::GL::KHR_RT::RTScene::Refresh()
 	}
 }
 
-bool HIGHOMEGA::GL::KHR_RT::RTScene::IsSceneNew()
+bool KHR_RT::RTScene::IsSceneNew()
 {
 	return signifyNewScene;
 }
 
-void HIGHOMEGA::GL::KHR_RT::RTScene::MarkSceneOld()
+void KHR_RT::RTScene::MarkSceneOld()
 {
 	signifyNewScene = false;
 }
@@ -1586,7 +1586,7 @@ void HIGHOMEGA::GL::KHR_RT::RTScene::MarkSceneOld()
 			<div class="panel-heading"><h2>Originally...</h2></div>
 			<div class="panel-content">
 			<xmp style="overflow: scroll;">
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::ErasePipelineState()
+void NVIDIA_RTX::RTXPipelineStateClass::ErasePipelineState()
 {
 	if (!ptrToInstance) return;
 
@@ -1600,7 +1600,7 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::ErasePipelineState()
 	ptrToInstance = nullptr;
 }
 
-HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass()
+NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass()
 {
 	havePipelineLayout = false;
 	haveRTXPipeline = false;
@@ -1608,7 +1608,7 @@ HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass()
 	ptrToInstance = nullptr;
 }
 
-HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass(InstanceClass & renderInst, DescriptorSetLayout & DescSetLayout, ShaderResourceSet & inpShader)
+NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass(InstanceClass & renderInst, DescriptorSetLayout & DescSetLayout, ShaderResourceSet & inpShader)
 {
 	ptrToInstance = &renderInst;
 
@@ -1670,12 +1670,12 @@ HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass(Instance
 	delete[] sbtData;
 }
 
-bool HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::IsInitialized()
+bool NVIDIA_RTX::RTXPipelineStateClass::IsInitialized()
 {
 	return haveRTXPipeline;
 }
 
-HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::~RTXPipelineStateClass()
+NVIDIA_RTX::RTXPipelineStateClass::~RTXPipelineStateClass()
 {
 	ErasePipelineState();
 }
@@ -1686,7 +1686,7 @@ HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::~RTXPipelineStateClass()
 			<div class="panel-heading"><h2>Before...</h2></div>
 			<div class="panel-content">
 			<xmp style="overflow: scroll;">
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::ErasePipelineState()
+void NVIDIA_RTX::RTXPipelineStateClass::ErasePipelineState()
 {
 	if (!ptrToInstance) return;
 
@@ -1700,7 +1700,7 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::ErasePipelineState()
 	ptrToInstance = nullptr;
 }
 
-HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass()
+NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass()
 {
 	havePipelineLayout = false;
 	haveRTXPipeline = false;
@@ -1708,7 +1708,7 @@ HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass()
 	ptrToInstance = nullptr;
 }
 
-HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass(InstanceClass & renderInst, DescriptorSetLayout & DescSetLayout, ShaderResourceSet & inpShader)
+NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass(InstanceClass & renderInst, DescriptorSetLayout & DescSetLayout, ShaderResourceSet & inpShader)
 {
 	ptrToInstance = &renderInst;
 
@@ -1777,12 +1777,12 @@ HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass(Instance
 	delete[] sbtDataAligned;
 }
 
-bool HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::IsInitialized()
+bool NVIDIA_RTX::RTXPipelineStateClass::IsInitialized()
 {
 	return haveRTXPipeline;
 }
 
-HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::~RTXPipelineStateClass()
+NVIDIA_RTX::RTXPipelineStateClass::~RTXPipelineStateClass()
 {
 	ErasePipelineState();
 }
@@ -1793,7 +1793,7 @@ HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::~RTXPipelineStateClass()
 			<div class="panel-heading"><h2>After...</h2></div>
 			<div class="panel-content">
 			<xmp style="overflow: scroll;">
-void HIGHOMEGA::GL::KHR_RT::RTPipelineStateClass::ErasePipelineState()
+void KHR_RT::RTPipelineStateClass::ErasePipelineState()
 {
 	if (!ptrToInstance) return;
 
@@ -1807,7 +1807,7 @@ void HIGHOMEGA::GL::KHR_RT::RTPipelineStateClass::ErasePipelineState()
 	ptrToInstance = nullptr;
 }
 
-HIGHOMEGA::GL::KHR_RT::RTPipelineStateClass::RTPipelineStateClass()
+KHR_RT::RTPipelineStateClass::RTPipelineStateClass()
 {
 	havePipelineLayout = false;
 	haveRTPipeline = false;
@@ -1815,7 +1815,7 @@ HIGHOMEGA::GL::KHR_RT::RTPipelineStateClass::RTPipelineStateClass()
 	ptrToInstance = nullptr;
 }
 
-HIGHOMEGA::GL::KHR_RT::RTPipelineStateClass::RTPipelineStateClass(InstanceClass & renderInst, DescriptorSetLayout & DescSetLayout, ShaderResourceSet & inpShader)
+KHR_RT::RTPipelineStateClass::RTPipelineStateClass(InstanceClass & renderInst, DescriptorSetLayout & DescSetLayout, ShaderResourceSet & inpShader)
 {
 	ptrToInstance = &renderInst;
 
@@ -1884,12 +1884,12 @@ HIGHOMEGA::GL::KHR_RT::RTPipelineStateClass::RTPipelineStateClass(InstanceClass 
 	delete[] sbtDataAligned;
 }
 
-bool HIGHOMEGA::GL::KHR_RT::RTPipelineStateClass::IsInitialized()
+bool KHR_RT::RTPipelineStateClass::IsInitialized()
 {
 	return haveRTPipeline;
 }
 
-HIGHOMEGA::GL::KHR_RT::RTPipelineStateClass::~RTPipelineStateClass()
+KHR_RT::RTPipelineStateClass::~RTPipelineStateClass()
 {
 	ErasePipelineState();
 }
@@ -1905,19 +1905,19 @@ HIGHOMEGA::GL::KHR_RT::RTPipelineStateClass::~RTPipelineStateClass()
 			<div class="panel-heading"><h2>Before...</h2></div>
 			<div class="panel-content">
 			<xmp style="overflow: scroll;">
-HIGHOMEGA::GL::NVIDIA_RTX::RTXTracelet::RTXTracelet()
+NVIDIA_RTX::RTXTracelet::RTXTracelet()
 {
 	ptrToInstance = nullptr;
 }
 
-HIGHOMEGA::GL::NVIDIA_RTX::RTXTracelet::RTXTracelet(InstanceClass & inpInstance)
+NVIDIA_RTX::RTXTracelet::RTXTracelet(InstanceClass & inpInstance)
 {
 	ptrToInstance = &inpInstance;
 
 	new (&traceSem) SemaphoreClass(ptrToInstance);
 }
 
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXTracelet::Submit(unsigned int inpWidth, unsigned int inpHeight, unsigned int inpDepth, std::vector<ShaderResource> & inpTracingResources, bool updateResources, ShaderResourceSet & inpRTXShaderResourceSet)
+void NVIDIA_RTX::RTXTracelet::Submit(unsigned int inpWidth, unsigned int inpHeight, unsigned int inpDepth, std::vector<ShaderResource> & inpTracingResources, bool updateResources, ShaderResourceSet & inpRTXShaderResourceSet)
 {
 	if (!ptrToInstance) return;
 
@@ -1960,12 +1960,12 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXTracelet::Submit(unsigned int inpWidth, unsig
 	WaitSubmitSignalCommandBuffer(submissionMode, traceSem);
 }
 
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXTracelet::makeAsync()
+void NVIDIA_RTX::RTXTracelet::makeAsync()
 {
 	submissionMode = SUBMIT_ASYNC;
 }
 
-void HIGHOMEGA::GL::NVIDIA_RTX::RTXTracelet::makeSerial()
+void NVIDIA_RTX::RTXTracelet::makeSerial()
 {
 	submissionMode = SUBMIT_SERIAL;
 }
@@ -1977,19 +1977,19 @@ void HIGHOMEGA::GL::NVIDIA_RTX::RTXTracelet::makeSerial()
 			<div class="panel-content">
 			<xmp style="overflow: scroll;">
 
-HIGHOMEGA::GL::KHR_RT::RTTracelet::RTTracelet()
+KHR_RT::RTTracelet::RTTracelet()
 {
 	ptrToInstance = nullptr;
 }
 
-HIGHOMEGA::GL::KHR_RT::RTTracelet::RTTracelet(InstanceClass & inpInstance)
+KHR_RT::RTTracelet::RTTracelet(InstanceClass & inpInstance)
 {
 	ptrToInstance = &inpInstance;
 
 	new (&traceSem) SemaphoreClass(ptrToInstance);
 }
 
-void HIGHOMEGA::GL::KHR_RT::RTTracelet::Submit(unsigned int inpWidth, unsigned int inpHeight, unsigned int inpDepth, std::vector<ShaderResource> & inpTracingResources, bool updateResources, ShaderResourceSet & inpRTShaderResourceSet)
+void KHR_RT::RTTracelet::Submit(unsigned int inpWidth, unsigned int inpHeight, unsigned int inpDepth, std::vector<ShaderResource> & inpTracingResources, bool updateResources, ShaderResourceSet & inpRTShaderResourceSet)
 {
 	if (!ptrToInstance) return;
 
@@ -2037,12 +2037,12 @@ void HIGHOMEGA::GL::KHR_RT::RTTracelet::Submit(unsigned int inpWidth, unsigned i
 	WaitSubmitSignalCommandBuffer(submissionMode, traceSem);
 }
 
-void HIGHOMEGA::GL::KHR_RT::RTTracelet::makeAsync()
+void KHR_RT::RTTracelet::makeAsync()
 {
 	submissionMode = SUBMIT_ASYNC;
 }
 
-void HIGHOMEGA::GL::KHR_RT::RTTracelet::makeSerial()
+void KHR_RT::RTTracelet::makeSerial()
 {
 	submissionMode = SUBMIT_SERIAL;
 }
