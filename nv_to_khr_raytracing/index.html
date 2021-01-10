@@ -8,10 +8,44 @@
 	<link rel="icon" type="image/png" href="./images/favicon.png"/>
 	<link rel="stylesheet" type="text/css" href="./css/main.css">
 	<link href="//db.onlinewebfonts.com/c/1db29588408eadbd4406aae9238555eb?family=Consolas" rel="stylesheet" type="text/css"/> 
+	<script>
+	function switchLightDarkMode()
+	{
+		if (window.displayMode == undefined || window.displayMode == "dark")
+		{
+			document.body.style.backgroundColor = "white";
+			document.body.style.color = "black";
+			let allHolders = document.getElementsByClassName("panel-holder");
+			for (let i = 0; i != allHolders.length; i++) {
+				allHolders[i].style.backgroundColor = "#EEEEEE";
+			}
+			let allHeadings = document.getElementsByClassName("panel-heading");
+			for (let i = 0; i != allHeadings.length; i++) {
+				allHeadings[i].style.backgroundColor = "#DDDDDD";
+			}
+			window.displayMode = "light";
+		}
+		else
+		{
+			document.body.style.backgroundColor = "#1F1F1F";
+			document.body.style.color = "#DEDEDE";
+			let allHolders = document.getElementsByClassName("panel-holder");
+			for (let i = 0; i != allHolders.length; i++) {
+				allHolders[i].style.backgroundColor = "#222222";
+			}
+			let allHeadings = document.getElementsByClassName("panel-heading");
+			for (let i = 0; i != allHeadings.length; i++) {
+				allHeadings[i].style.backgroundColor = "grey";
+			}
+			window.displayMode = "dark";
+		}
+	}
+	</script>
 </head>
 
 <body>
 	<h1>Transition guide from VK_NV_raytracing to (final) VK_KHR_raytracing!</h1>
+	<button style="float: right;" onclick="switchLightDarkMode()">Light/dark mode</button>
 	<h2>By: Baktash Abdollah-shamshir-saz<br/>Creation: 01/09/2021<br/>Update: 01/10/2021</h2>
 	&nbsp;<p/>
 	So I spent a couple of days earlier in the year transitioning from VK_NV_raytracing to VK_KHR_raytracing.

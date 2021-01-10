@@ -16,9 +16,8 @@ a:visited {
 
 body {
 	font-family: "Gothic";
-	color: white;
-	background-color: black;
-	text-shadow: 0 0 5px #7a93b1;
+	color: #DEDEDE;
+	background-color: #1F1F1F;
 }
 
 .panel-holder {
