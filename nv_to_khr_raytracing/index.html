@@ -316,7 +316,7 @@ bool HIGHOMEGA::GL::KHR_RT::RTInstance::Enabled()
 		</div>
 	</div>
 	<h1>Memory management</h1>
-	Make sure your memory manager allocates the RT chunks (chunks where RT related buffers land) with the <code>VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT</code> flag.
+	Make sure your memory manager allocates the RT chunks -- chunks where RT related buffers land -- with the <code>VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT</code> flag.
 	In my case this is manual as I like to roll my own usually :). If you're using VMA, figure out how to tell it to do it or something. If it's not doing it.<p/>
 	<div class="panel-holder">
 		<div class="left-panel">
