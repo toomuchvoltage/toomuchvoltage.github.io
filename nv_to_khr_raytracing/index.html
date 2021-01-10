@@ -12,7 +12,7 @@
 
 <body>
 	<h1>Transition guide from VK_NV_raytracing to (final) VK_KHR_raytracing!</h1>
-	<h2>By: Baktash Abdollah-shamshir-saz<br/>Creation: 01/09/2021<br/>Update: 01/09/2021</h2>
+	<h2>By: Baktash Abdollah-shamshir-saz<br/>Creation: 01/09/2021<br/>Update: 01/10/2021</h2>
 	&nbsp;<p/>
 	So I spent a couple of days earlier in the year transitioning from VK_NV_raytracing to VK_KHR_raytracing.
 	I had not transitioned any code before that knowing that things were subject to change. In due time that changed and here we are.
@@ -2003,6 +2003,33 @@ void HIGHOMEGA::GL::KHR_RT::RTTracelet::makeSerial()
 {
 	submissionMode = SUBMIT_SERIAL;
 }
+			</xmp>
+			</div>
+		</div>
+	</div>
+	<p/>
+	<h1>SPIR-V Compilation</h1>
+	You need to compile for SPIR-V 1.4.<p/>
+	<div class="panel-holder">
+		<div class="left-panel">
+			<div class="panel-heading"><h2>Before...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+for %%A in (*.rgen) do glslangvalidator -V %%A -o %%A.spv
+for %%A in (*.rchit) do glslangvalidator -V %%A -o %%A.spv
+for %%A in (*.rmiss) do glslangvalidator -V %%A -o %%A.spv
+for %%A in (*.rahit) do glslangvalidator -V %%A -o %%A.spv
+			</xmp>
+			</div>
+		</div>
+		<div class="right-panel">
+			<div class="panel-heading"><h2>After...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+for %%A in (*.rgen) do glslangvalidator --target-env spirv1.4 -V %%A -o %%A.spv
+for %%A in (*.rchit) do glslangvalidator --target-env spirv1.4 -V %%A -o %%A.spv
+for %%A in (*.rmiss) do glslangvalidator --target-env spirv1.4 -V %%A -o %%A.spv
+for %%A in (*.rahit) do glslangvalidator --target-env spirv1.4 -V %%A -o %%A.spv
 			</xmp>
 			</div>
 		</div>
