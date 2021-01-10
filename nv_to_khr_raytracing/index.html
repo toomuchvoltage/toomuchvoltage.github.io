@@ -590,7 +590,7 @@ void HIGHOMEGA::GL::BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharin
 	In the new version the names are changed to properly reflect their intended use: <code>CreateAccelStruct(...)</code> and <code>UpdateAccelStruct(...)</code>.<p/>
 	As you can see, <code>GetScratchBufferSize(...)</code> is gone and we do not call the memory manager (i.e. <code>AllocMem(...)</code>) directly any longer.
 	This is nice as now one less class interfaces the memory manager directly.<p/>
-	Geometry is fed via <code>VkAccelerationStructureGeometryKHR</code> rather than <code>VkGeometryNV</code>.
+	As previously mentioned, geometry is fed via <code>VkAccelerationStructureGeometryKHR</code> rather than <code>VkGeometryNV</code>.
 	User-side instance data struct <code>VkGeometryInstance</code> is no longer needed and <code>VkAccelerationStructureInstanceKHR</code> is provided via Vulkan itself.
 	Still not confident about my barrier usage: if you see an issue with it, please reach out with a correction. I haven't had a chance to look at it closely and clean it up.
 	However, the validation layer seems hunky dory with it so far.
@@ -1013,6 +1013,7 @@ HIGHOMEGA::GL::KHR_RT::RTAccelStruct::~RTAccelStruct()
 	<h1>Geometry (BLAS abstraction)</h1>
 	RTXGeometry class is simply an amendment to regular vertex buffers. It allows any geometry to turn into an acceleration structure in case it needs to (when hardware raytracing is available).
 	It inherits the acceleration structure base class described above.<p/>
+	On the NV side <code>traceGeom</code> is <code>VkGeometryNV</code> and on the KHR side it is <code>VkAccelerationStructureGeometryKHR</code>.
 	Please note where I erroneously set <code>traceGeom.geometry.aabbs</code> without really providing any real further data. I can't recall why I ever set this. I'm tempted to blame an old tutorial copy-paste situation.<p/>
 	<u>Doing this with KHR_raytracing will give you a nasty data corruption case that will take you days to debug as <code>traceGeom.geometry.aabbs</code> overlaps as a union with <code>traceGeom.geometry.triangles</code>.</u>
 	<div class="panel-holder">
