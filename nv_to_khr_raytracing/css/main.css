@@ -1,0 +1,77 @@
+@font-face {
+	font-family: "Gothic";
+	src: url("../fonts/gothic.woff") format("woff"),
+		 url("../fonts/gothic.ttf") format("truetype");
+}
+
+a:link {
+	color: blue;
+	text-decoration: none;
+}
+
+a:visited {
+	color: blue;
+	text-decoration: none;
+}
+
+body {
+	font-family: "Gothic";
+	color: white;
+	background-color: black;
+	text-shadow: 0 0 5px #7a93b1;
+}
+
+.panel-holder {
+	width: 100%;
+	display: flex;
+	background: #222222;
+}
+
+.right-panel {
+	width: 50%;
+	min-height: 100%;
+	float: right;
+	outline: 1px dashed #7a93b1;
+}
+
+.left-panel {
+	width: 50%;
+	minheight: 100%;
+	float: left;
+	outline: 1px dashed #7a93b1;
+}
+
+.right-panel-third {
+	width: 33.33%;
+	min-height: 100%;
+	float: right;
+	outline: 1px dashed #7a93b1;
+}
+
+.center-panel-third {
+	width: 33.33%;
+	minheight: 100%;
+	float: none;
+	outline: 1px dashed #7a93b1;
+}
+
+.left-panel-third {
+	width: 33.33%;
+	minheight: 100%;
+	float: left;
+	outline: 1px dashed #7a93b1;
+}
+
+.panel-heading {
+	background: grey;
+	padding-top: 1px;
+	padding-bottom: 1px;
+	outline: 1px dashed #7a93b1;
+}
+
+.panel-content {
+	font-family: "Consolas";
+	text-shadow: none;
+	padding-top: 1px;
+	padding-bottom: 1px;
+}

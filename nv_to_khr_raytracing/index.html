@@ -1,0 +1,2031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="x-ua-compatible" content="ie=edge" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Transition guide from VK_NV_raytracing to (final) VK_KHR_raytracing</title>
+	<link rel="icon" type="image/png" href="./images/favicon.png"/>
+	<link rel="stylesheet" type="text/css" href="./css/main.css">
+	<link href="//db.onlinewebfonts.com/c/1db29588408eadbd4406aae9238555eb?family=Consolas" rel="stylesheet" type="text/css"/> 
+</head>
+
+<body>
+	<h1>Transition guide from VK_NV_raytracing to (final) VK_KHR_raytracing!</h1>
+	<h2>By: Baktash Abdollah-shamshir-saz<br/>Creation: 01/09/2021<br/>Update: 01/09/2021</h2>
+	&nbsp;<p/>
+	So I spent a couple of days earlier in the year transitioning from VK_NV_raytracing to VK_KHR_raytracing.
+	I had not transitioned any code before that knowing that things were subject to change. In due time that changed and here we are.
+	It was painful and in the interest of you not suffering like I did, I wrote this article. Hope this saves you a lot of frustration.
+	<h1>Intended audience</h1>
+	This guide is strictly for those who did NOT change any code from VK_NV_raytracing to VK_KHR_raytracing.
+	Challenges in moving from the provisional VK_KHR_raytraing to the final VK_KHR_raytraing will be different as I've been told by people who went through it.
+	Also, I strictly consume SPIR-V and this guide doesn't cover any DXC compiled and re-purposed DXR shaders.
+	<h1>Preparation</h1>
+	If on Windows 10, upgrade to 20H2. Upgrade Vulkan SDK to the 1.2.162.0 (latest as of now) and if on nVidia upgrade drivers to at least 460.89.
+	We will be using Vulkan 1.1 with SPIR-V version 1.4. This represents the minimum needed version bump in terms of Vulkan for things to work.
+	I also do not use ray-queries as again, this is strictly a porting exercise.
+	Also -- as usual for exercises like this -- keep the debug layer on until it's blank.
+	<h1>Device creation</h1>
+	Right out of the gate... we have to replace the extension with 7 other extensions.
+	Make sure to request things you need and not the things you don't. For instance RTX 2080Ti does *not* support host commands, so don't ask for it.
+	We need <code>vkPhysicalDeviceRayTracingPipelineFeatures</code> because we're using ray tracing pipelines and not ray-queries.
+	We also need <code>vkPhysicalDeviceBufferAddressFeatures</code> because fundamentally KHR_raytracing needs buffer device addresses all over the place. For almost everything.
+	<code>deviceDescriptorIndexingFeature</code> (pretty much bindless...) is a staple of any ray-tracing. I even use it when I'm doing my real-time Compact binary LBVH ray tracing stuff (see <a target="_blank" href="https://twitter.com/TooMuchVoltage/status/1330134177002500098">Twitter</a> ;).
+	<p/>
+	<div class="panel-holder">
+		<div class="left-panel">
+			<div class="panel-heading"><h2>Before...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+std::vector<const char*> enabledDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, 
+					VK_KHR_MAINTENANCE3_EXTENSION_NAME, 
+					VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME, 
+					VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME, 
+					VK_KHR_DESCRIPTOR_UPDATE_TEMPLATE_EXTENSION_NAME,
+
+					VK_NV_RAY_TRACING_EXTENSION_NAME };
+
+VkPhysicalDeviceFeatures deviceFeatures = {};
+deviceFeatures.samplerAnisotropy = VK_TRUE;
+deviceFeatures.depthClamp = VK_TRUE;
+deviceFeatures.geometryShader = VK_TRUE;
+deviceFeatures.shaderStorageImageExtendedFormats = VK_TRUE;
+deviceFeatures.tessellationShader = VK_TRUE;
+deviceFeatures.vertexPipelineStoresAndAtomics = VK_TRUE;
+deviceFeatures.fragmentStoresAndAtomics = VK_TRUE;
+
+VkPhysicalDeviceDescriptorIndexingFeaturesEXT deviceDescriptorIndexingFeature = {};
+deviceDescriptorIndexingFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+deviceDescriptorIndexingFeature.pNext = VK_NULL_HANDLE;
+deviceDescriptorIndexingFeature.descriptorBindingVariableDescriptorCount = VK_TRUE;
+deviceDescriptorIndexingFeature.runtimeDescriptorArray = VK_TRUE;
+deviceDescriptorIndexingFeature.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+deviceDescriptorIndexingFeature.shaderStorageBufferArrayNonUniformIndexing = VK_TRUE;
+
+VkDeviceCreateInfo deviceCreateInfo = {};
+deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+deviceCreateInfo.pNext = &deviceDescriptorIndexingFeature;
+deviceCreateInfo.queueCreateInfoCount = 1;
+deviceCreateInfo.pQueueCreateInfos = queueCreateInfo;
+deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
+			</xmp>
+			</div>
+		</div>
+		<div class="right-panel">
+			<div class="panel-heading"><h2>After...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+std::vector<const char*> enabledDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+					VK_KHR_MAINTENANCE3_EXTENSION_NAME,
+					VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
+					VK_KHR_DESCRIPTOR_UPDATE_TEMPLATE_EXTENSION_NAME,
+					VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
+
+					VK_KHR_SPIRV_1_4_EXTENSION_NAME,
+					VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME,
+					VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
+					VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
+					VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME,
+					VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
+					VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME };
+
+
+VkPhysicalDeviceFeatures deviceFeatures = {};
+deviceFeatures.samplerAnisotropy = VK_TRUE;
+deviceFeatures.depthClamp = VK_TRUE;
+deviceFeatures.geometryShader = VK_TRUE;
+deviceFeatures.shaderStorageImageExtendedFormats = VK_TRUE;
+deviceFeatures.tessellationShader = VK_TRUE;
+deviceFeatures.vertexPipelineStoresAndAtomics = VK_TRUE;
+deviceFeatures.fragmentStoresAndAtomics = VK_TRUE;
+
+VkPhysicalDeviceAccelerationStructureFeaturesKHR vkPhysicalDeviceAccelerationStructureFeatures;
+vkPhysicalDeviceAccelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+vkPhysicalDeviceAccelerationStructureFeatures.pNext = VK_NULL_HANDLE;
+vkPhysicalDeviceAccelerationStructureFeatures.accelerationStructure = VK_TRUE;
+vkPhysicalDeviceAccelerationStructureFeatures.accelerationStructureCaptureReplay = VK_FALSE;
+vkPhysicalDeviceAccelerationStructureFeatures.accelerationStructureHostCommands = VK_FALSE;
+vkPhysicalDeviceAccelerationStructureFeatures.accelerationStructureIndirectBuild = VK_FALSE;
+vkPhysicalDeviceAccelerationStructureFeatures.descriptorBindingAccelerationStructureUpdateAfterBind = VK_TRUE;
+
+VkPhysicalDeviceRayTracingPipelineFeaturesKHR vkPhysicalDeviceRayTracingPipelineFeatures;
+vkPhysicalDeviceRayTracingPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+vkPhysicalDeviceRayTracingPipelineFeatures.pNext = &vkPhysicalDeviceAccelerationStructureFeatures;
+vkPhysicalDeviceRayTracingPipelineFeatures.rayTracingPipeline = VK_TRUE;
+vkPhysicalDeviceRayTracingPipelineFeatures.rayTracingPipelineShaderGroupHandleCaptureReplay = VK_FALSE;
+vkPhysicalDeviceRayTracingPipelineFeatures.rayTracingPipelineShaderGroupHandleCaptureReplayMixed = VK_FALSE;
+vkPhysicalDeviceRayTracingPipelineFeatures.rayTracingPipelineTraceRaysIndirect = VK_FALSE;
+vkPhysicalDeviceRayTracingPipelineFeatures.rayTraversalPrimitiveCulling = VK_FALSE;
+
+VkPhysicalDeviceBufferDeviceAddressFeatures vkPhysicalDeviceBufferAddressFeatures;
+vkPhysicalDeviceBufferAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+vkPhysicalDeviceBufferAddressFeatures.pNext = &vkPhysicalDeviceRayTracingPipelineFeatures;
+vkPhysicalDeviceBufferAddressFeatures.bufferDeviceAddress = VK_TRUE;
+vkPhysicalDeviceBufferAddressFeatures.bufferDeviceAddressCaptureReplay = VK_FALSE;
+vkPhysicalDeviceBufferAddressFeatures.bufferDeviceAddressMultiDevice = VK_FALSE;
+
+VkPhysicalDeviceDescriptorIndexingFeaturesEXT deviceDescriptorIndexingFeature = {};
+deviceDescriptorIndexingFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+deviceDescriptorIndexingFeature.pNext = &vkPhysicalDeviceBufferAddressFeatures;
+deviceDescriptorIndexingFeature.descriptorBindingVariableDescriptorCount = VK_TRUE;
+deviceDescriptorIndexingFeature.runtimeDescriptorArray = VK_TRUE;
+deviceDescriptorIndexingFeature.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+deviceDescriptorIndexingFeature.shaderStorageBufferArrayNonUniformIndexing = VK_TRUE;
+
+VkDeviceCreateInfo deviceCreateInfo = {};
+deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+deviceCreateInfo.pNext = &deviceDescriptorIndexingFeature;
+deviceCreateInfo.queueCreateInfoCount = 1;
+deviceCreateInfo.pQueueCreateInfos = queueCreateInfo;
+deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
+			</xmp>
+			</div>
+		</div>
+	</div>
+	<h1>Pointer fetching</h1>
+	Probably the most fun part of this article as it provides a high level view of what's being replaced and what's not necessary any more.
+	The usage pattern should be self evident: if you managed to create your device with hardware raytracing call <code>::Enable(...)</code> and check whether it is enabled hereafter with <code>::Enabled()</code>.
+	<p/>
+	<div class="panel-holder">
+		<div class="left-panel">
+			<div class="panel-heading"><h2>Before...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+namespace NVIDIA_RTX
+{
+	class RTXInstance
+	{
+	private:
+		static bool rtxEnabled;
+
+	public:
+		static PFN_vkCreateAccelerationStructureNV vkCreateAccelerationStructureNV;
+		static PFN_vkDestroyAccelerationStructureNV vkDestroyAccelerationStructureNV;
+		static PFN_vkGetAccelerationStructureMemoryRequirementsNV vkGetAccelerationStructureMemoryRequirementsNV;
+		static PFN_vkCmdCopyAccelerationStructureNV vkCmdCopyAccelerationStructureNV;
+		static PFN_vkBindAccelerationStructureMemoryNV vkBindAccelerationStructureMemoryNV;
+		static PFN_vkCmdBuildAccelerationStructureNV vkCmdBuildAccelerationStructureNV;
+		static PFN_vkCmdTraceRaysNV vkCmdTraceRaysNV;
+		static PFN_vkGetRayTracingShaderGroupHandlesNV vkGetRayTracingShaderGroupHandlesNV;
+		static PFN_vkCreateRayTracingPipelinesNV vkCreateRayTracingPipelinesNV;
+		static PFN_vkGetAccelerationStructureHandleNV vkGetAccelerationStructureHandleNV;
+
+		static VkPhysicalDeviceRayTracingPropertiesNV raytracingProperties;
+
+		static void Enable(InstanceClass & inpInstance);
+		static bool Enabled();
+	};
+	// Just a bunch of forward declarations... as they're part of this namespace
+	class RTXPipelineStateClass;
+	class RTXAccelStruct;
+	class RTXScene;
+	class RTXTracelet;
+}
+
+...
+
+bool RTXInstance::rtxEnabled = false;
+PFN_vkCreateAccelerationStructureNV RTXInstance::vkCreateAccelerationStructureNV = VK_NULL_HANDLE;
+PFN_vkDestroyAccelerationStructureNV RTXInstance::vkDestroyAccelerationStructureNV = VK_NULL_HANDLE;
+PFN_vkGetAccelerationStructureMemoryRequirementsNV RTXInstance::vkGetAccelerationStructureMemoryRequirementsNV = VK_NULL_HANDLE;
+PFN_vkCmdCopyAccelerationStructureNV RTXInstance::vkCmdCopyAccelerationStructureNV = VK_NULL_HANDLE;
+PFN_vkBindAccelerationStructureMemoryNV RTXInstance::vkBindAccelerationStructureMemoryNV = VK_NULL_HANDLE;
+PFN_vkCmdBuildAccelerationStructureNV RTXInstance::vkCmdBuildAccelerationStructureNV = VK_NULL_HANDLE;
+PFN_vkCmdTraceRaysNV RTXInstance::vkCmdTraceRaysNV = VK_NULL_HANDLE;
+PFN_vkGetRayTracingShaderGroupHandlesNV RTXInstance::vkGetRayTracingShaderGroupHandlesNV = VK_NULL_HANDLE;
+PFN_vkCreateRayTracingPipelinesNV RTXInstance::vkCreateRayTracingPipelinesNV = VK_NULL_HANDLE;
+PFN_vkGetAccelerationStructureHandleNV RTXInstance::vkGetAccelerationStructureHandleNV = VK_NULL_HANDLE;
+VkPhysicalDeviceRayTracingPropertiesNV RTXInstance::raytracingProperties = { };
+
+...
+
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXInstance::Enable(InstanceClass & inpInstance)
+{
+	vkCreateAccelerationStructureNV = reinterpret_cast<PFN_vkCreateAccelerationStructureNV>(vkGetDeviceProcAddr(inpInstance.device, "vkCreateAccelerationStructureNV"));
+	vkDestroyAccelerationStructureNV = reinterpret_cast<PFN_vkDestroyAccelerationStructureNV>(vkGetDeviceProcAddr(inpInstance.device, "vkDestroyAccelerationStructureNV"));
+	vkGetAccelerationStructureMemoryRequirementsNV = reinterpret_cast<PFN_vkGetAccelerationStructureMemoryRequirementsNV>(vkGetDeviceProcAddr(inpInstance.device, "vkGetAccelerationStructureMemoryRequirementsNV"));
+	vkCmdCopyAccelerationStructureNV = reinterpret_cast<PFN_vkCmdCopyAccelerationStructureNV>(vkGetDeviceProcAddr(inpInstance.device, "vkCmdCopyAccelerationStructureNV"));
+	vkBindAccelerationStructureMemoryNV = reinterpret_cast<PFN_vkBindAccelerationStructureMemoryNV>(vkGetDeviceProcAddr(inpInstance.device, "vkBindAccelerationStructureMemoryNV"));
+	vkCmdBuildAccelerationStructureNV = reinterpret_cast<PFN_vkCmdBuildAccelerationStructureNV>(vkGetDeviceProcAddr(inpInstance.device, "vkCmdBuildAccelerationStructureNV"));
+	vkCmdTraceRaysNV = reinterpret_cast<PFN_vkCmdTraceRaysNV>(vkGetDeviceProcAddr(inpInstance.device, "vkCmdTraceRaysNV"));
+	vkGetRayTracingShaderGroupHandlesNV = reinterpret_cast<PFN_vkGetRayTracingShaderGroupHandlesNV>(vkGetDeviceProcAddr(inpInstance.device, "vkGetRayTracingShaderGroupHandlesNV"));
+	vkCreateRayTracingPipelinesNV = reinterpret_cast<PFN_vkCreateRayTracingPipelinesNV>(vkGetDeviceProcAddr(inpInstance.device, "vkCreateRayTracingPipelinesNV"));
+	vkGetAccelerationStructureHandleNV = reinterpret_cast<PFN_vkGetAccelerationStructureHandleNV>(vkGetDeviceProcAddr(inpInstance.device, "vkGetAccelerationStructureHandleNV"));
+
+	raytracingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV;
+	raytracingProperties.pNext = nullptr;
+	raytracingProperties.maxRecursionDepth = 8;
+	raytracingProperties.shaderGroupHandleSize = 0;
+	VkPhysicalDeviceProperties2 props;
+	props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	props.pNext = &raytracingProperties;
+	props.properties = { };
+	vkGetPhysicalDeviceProperties2(inpInstance.physicalDevice, &props);
+
+	rtxEnabled = true;
+}
+
+bool HIGHOMEGA::GL::NVIDIA_RTX::RTXInstance::Enabled()
+{
+	return rtxEnabled;
+}
+			</xmp>
+			</div>
+		</div>
+		<div class="right-panel">
+			<div class="panel-heading"><h2>After...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+namespace KHR_RT
+{
+	class RTInstance
+	{
+	private:
+		static bool rtEnabled;
+
+	public:
+		static PFN_vkCreateAccelerationStructureKHR fpCreateAccelerationStructureKHR;
+		static PFN_vkDestroyAccelerationStructureKHR fpDestroyAccelerationStructureKHR;
+		static PFN_vkCmdBuildAccelerationStructuresKHR fpCmdBuildAccelerationStructuresKHR;
+		static PFN_vkCmdTraceRaysKHR fpCmdTraceRaysKHR;
+		static PFN_vkGetBufferDeviceAddressKHR fpGetBufferDeviceAddressKHR;
+		static PFN_vkCreateRayTracingPipelinesKHR fpCreateRayTracingPipelinesKHR;
+		static PFN_vkGetAccelerationStructureBuildSizesKHR fpGetAccelerationStructureBuildSizesKHR;
+		static PFN_vkGetAccelerationStructureDeviceAddressKHR fpGetAccelerationStructureDeviceAddressKHR;
+		static PFN_vkGetRayTracingShaderGroupHandlesKHR fpGetRayTracingShaderGroupHandlesKHR;
+
+		static VkPhysicalDeviceRayTracingPipelinePropertiesKHR raytracingPipelineProperties;
+
+		static void Enable(InstanceClass & inpInstance);
+		static bool Enabled();
+	};
+	class RTPipelineStateClass;
+	class RTAccelStruct;
+	class RTScene;
+	class RTTracelet;
+}
+
+...
+
+bool RTInstance::rtEnabled = false;
+PFN_vkCreateAccelerationStructureKHR RTInstance::fpCreateAccelerationStructureKHR = VK_NULL_HANDLE;
+PFN_vkDestroyAccelerationStructureKHR RTInstance::fpDestroyAccelerationStructureKHR = VK_NULL_HANDLE;
+PFN_vkCmdBuildAccelerationStructuresKHR RTInstance::fpCmdBuildAccelerationStructuresKHR = VK_NULL_HANDLE;
+PFN_vkCmdTraceRaysKHR RTInstance::fpCmdTraceRaysKHR = VK_NULL_HANDLE;
+PFN_vkGetBufferDeviceAddressKHR RTInstance::fpGetBufferDeviceAddressKHR = VK_NULL_HANDLE;
+PFN_vkCreateRayTracingPipelinesKHR RTInstance::fpCreateRayTracingPipelinesKHR = VK_NULL_HANDLE;
+PFN_vkGetAccelerationStructureBuildSizesKHR RTInstance::fpGetAccelerationStructureBuildSizesKHR = VK_NULL_HANDLE;
+PFN_vkGetAccelerationStructureDeviceAddressKHR RTInstance::fpGetAccelerationStructureDeviceAddressKHR = VK_NULL_HANDLE;
+PFN_vkGetRayTracingShaderGroupHandlesKHR RTInstance::fpGetRayTracingShaderGroupHandlesKHR = VK_NULL_HANDLE;
+VkPhysicalDeviceRayTracingPipelinePropertiesKHR RTInstance::raytracingPipelineProperties = { };
+
+...
+
+void HIGHOMEGA::GL::KHR_RT::RTInstance::Enable(InstanceClass & inpInstance)
+{
+	fpCreateAccelerationStructureKHR = reinterpret_cast<PFN_vkCreateAccelerationStructureKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkCreateAccelerationStructureKHR"));
+	fpDestroyAccelerationStructureKHR = reinterpret_cast<PFN_vkDestroyAccelerationStructureKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkDestroyAccelerationStructureKHR"));
+	fpCmdBuildAccelerationStructuresKHR = reinterpret_cast<PFN_vkCmdBuildAccelerationStructuresKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkCmdBuildAccelerationStructuresKHR"));
+	fpCmdTraceRaysKHR = reinterpret_cast<PFN_vkCmdTraceRaysKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkCmdTraceRaysKHR"));
+	fpGetBufferDeviceAddressKHR = reinterpret_cast<PFN_vkGetBufferDeviceAddressKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkGetBufferDeviceAddressKHR"));
+	fpCreateRayTracingPipelinesKHR = reinterpret_cast<PFN_vkCreateRayTracingPipelinesKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkCreateRayTracingPipelinesKHR"));
+	fpGetAccelerationStructureBuildSizesKHR = reinterpret_cast<PFN_vkGetAccelerationStructureBuildSizesKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkGetAccelerationStructureBuildSizesKHR"));
+	fpGetAccelerationStructureDeviceAddressKHR = reinterpret_cast<PFN_vkGetAccelerationStructureDeviceAddressKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkGetAccelerationStructureDeviceAddressKHR"));
+	fpGetRayTracingShaderGroupHandlesKHR = reinterpret_cast<PFN_vkGetRayTracingShaderGroupHandlesKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkGetRayTracingShaderGroupHandlesKHR"));
+
+	raytracingPipelineProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+	raytracingPipelineProperties.pNext = nullptr;
+	raytracingPipelineProperties.maxRayRecursionDepth = 8;
+	raytracingPipelineProperties.shaderGroupHandleSize = 0;
+	VkPhysicalDeviceProperties2 props;
+	props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	props.pNext = &raytracingPipelineProperties;
+	props.properties = { };
+	vkGetPhysicalDeviceProperties2(inpInstance.physicalDevice, &props);
+
+	rtEnabled = true;
+}
+
+bool HIGHOMEGA::GL::KHR_RT::RTInstance::Enabled()
+{
+	return rtEnabled;
+}
+			</xmp>
+			</div>
+		</div>
+	</div>
+	<h1>Memory management</h1>
+	Make sure your memory manager allocates the RT chunks (chunks where RT related buffers land) with the <code>VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT</code> flag.
+	In my case this is manual as I like to roll my own usually :). If you're using VMA, figure out how to tell it to do it or something. If it's not doing it.<p/>
+	<div class="panel-holder">
+		<div class="left-panel">
+			<div class="panel-heading"><h2>Before...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+
+// Chunks are allocated using one of these usage flags (not used in this snippet)
+enum MEMORY_MAP_TYPE
+{
+	IMAGE = 0,
+	BUFFER,
+	RTX
+};
+
+...
+
+allocInfo.allocationSize = chunkMaxSize;
+result = vkAllocateMemory(inpDev, &allocInfo, nullptr, &addedChunkRef.mem);
+if (result != VK_SUCCESS) throw std::runtime_error("Could not allocate memory chunk");
+			</xmp>
+			</div>
+		</div>
+		<div class="right-panel">
+			<div class="panel-heading"><h2>After...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+
+// Basically the RTX chunk is now anything that needs device address
+enum MEMORY_MAP_TYPE
+{
+	IMAGE = 0,
+	BUFFER,
+	DEV_ADDRESS
+};
+
+...
+
+allocInfo.allocationSize = chunkMaxSize;
+VkMemoryAllocateFlagsInfo memFlagInfo;
+if (RTInstance::Enabled() && memoryMapType == DEV_ADDRESS) // Requested chunk is an RT-type chunk... requester needs device address
+{
+	memFlagInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO_KHR;
+	memFlagInfo.pNext = VK_NULL_HANDLE;
+	memFlagInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+	memFlagInfo.deviceMask = 0u;
+	allocInfo.pNext = &memFlagInfo;
+}
+result = vkAllocateMemory(inpDev, &allocInfo, nullptr, &addedChunkRef.mem);
+if (result != VK_SUCCESS) throw std::runtime_error("Could not allocate memory chunk");
+			</xmp>
+			</div>
+		</div>
+	</div>
+	<h1>Buffer Creation</h1>
+	My rendering abstractions basically create buffers right with a non-default constructor.
+	If you call <code>BufferClassWithStaging(...)</code> on a <code>BufferClass</code> instance, it'll basically create a GPU-side-only buffer using a temporary staging buffer.
+	It will no longer have any host-side visibility.
+	We have new buffer usage modes and <code>USAGE_DEVICE_ADDRESS</code> will decide whether or not we'll ask our memory manager whether to land our buffer on chunks dedicated to ray-tracing or not.
+	<code>BufferClassWithStaging(...)</code> is not used here and is only provided for reference. It doesn't change due to this transition.
+	<p/>
+	<div class="panel-holder">
+		<div class="left-panel">
+			<div class="panel-heading"><h2>Before...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+enum MEMORY_USAGE
+{
+	USAGE_SRC = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+	USAGE_DST = VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	USAGE_VERT = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	USAGE_INDEX = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	USAGE_SSBO = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+	USAGE_UBO = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	USAGE_RTX = VK_BUFFER_USAGE_RAY_TRACING_BIT_NV
+};
+
+...
+
+BufferClass::BufferClass(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void *inpData, unsigned int inpDataSize)
+{
+	instanceRef = &inpInstance;
+	VkMemoryRequirements memReqs;
+
+	usage = inpUsage;
+	memOpts = inpMemOpts;
+	sharing = inpSharing;
+	mode = inpMode;
+	totalDataSize = inpDataSize;
+
+	VkBufferCreateInfo bufferInfo = {};
+	allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.pNext = VK_NULL_HANDLE;
+	allocInfo.allocationSize = 0;
+	allocInfo.memoryTypeIndex = 0;
+
+	if (mode == MODE_CREATE) bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = totalDataSize;
+	bufferInfo.usage = inpUsage;
+	if (sharing == SHARING_EXCLUSIVE) bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	VkResult result = vkCreateBuffer(inpInstance.device, &bufferInfo, nullptr, &buffer);
+	if (result != VK_SUCCESS) { RemovePast(); throw std::runtime_error("Could not create buffer"); }
+	haveBuffer = true;
+
+	vkGetBufferMemoryRequirements(inpInstance.device, buffer, &memReqs);
+	getMemoryType(&inpInstance, memReqs.memoryTypeBits, memOpts, &allocInfo.memoryTypeIndex);
+
+	try
+	{
+		subAllocId = AllocMem(inpInstance.device, allocInfo, memReqs, BUFFER, &memPtr, &offset, &len);
+		typeForSubAlloc = allocInfo.memoryTypeIndex;
+		haveSubAlloc = true;
+	}
+	catch (...)
+	{
+		RemovePast();
+		throw std::runtime_error("Could not allocate buffer memory");
+	}
+
+	result = vkBindBufferMemory(inpInstance.device, buffer, memPtr, offset);
+	if (result != VK_SUCCESS) { RemovePast(); throw std::runtime_error("Could not bind buffer to memory"); }
+
+	descriptor.buffer = buffer;
+	descriptor.offset = 0;
+	descriptor.range = totalDataSize;
+
+	if (inpData != nullptr)
+	{
+		try
+		{
+			UploadSubData(0, inpData, totalDataSize); 
+		}
+		catch (...) { RemovePast(); throw std::runtime_error("Could not upload buffer data"); }
+	}
+}
+
+void HIGHOMEGA::GL::BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void * inpData, unsigned int inpDataSize)
+{
+	totalDataSize = inpDataSize;
+
+	BufferClass bufferStaging(MEMORY_HOST_VISIBLE, inpSharing, inpMode, USAGE_SRC, inpInstance, inpData, totalDataSize);
+	new (this) BufferClass(MEMORY_DEVICE_LOCAL, inpSharing, inpMode, USAGE_DST | inpUsage, inpInstance, nullptr, totalDataSize);
+
+	VkBufferCopy copyRegion = {};
+
+	try { BeginCommandBuffer(inpInstance); }
+	catch (...) { RemovePast(); throw std::runtime_error("Could not begin setup cmd buffer for buffer creation"); }
+
+	copyRegion.size = totalDataSize;
+	vkCmdCopyBuffer(cmdBuffers[0], bufferStaging.buffer, buffer, 1, &copyRegion);
+
+	try { EndCommandBuffer(); }
+	catch (...) { RemovePast(); throw std::runtime_error("Could not end setup cmd buffer for buffer creation"); }
+
+	try { SubmitCommandBuffer(); }
+	catch (...) { RemovePast(); throw std::runtime_error("Could not submit setup cmd buffer for buffer creation"); }
+}
+			</xmp>
+			</div>
+		</div>
+		<div class="right-panel">
+			<div class="panel-heading"><h2>After...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+// We have new buffer usage modes
+enum MEMORY_USAGE
+{
+	USAGE_SRC = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+	USAGE_DST = VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	USAGE_VERT = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	USAGE_INDEX = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	USAGE_SSBO = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+	USAGE_UBO = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	USAGE_ACCEL_STRUCT = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
+	USAGE_SBT = VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR,
+	USAGE_DEVICE_ADDRESS = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT
+};
+
+...
+
+BufferClass::BufferClass(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void *inpData, unsigned int inpDataSize)
+{
+	instanceRef = &inpInstance;
+	VkMemoryRequirements memReqs;
+
+	usage = inpUsage;
+	memOpts = inpMemOpts;
+	sharing = inpSharing;
+	mode = inpMode;
+	totalDataSize = inpDataSize;
+
+	VkBufferCreateInfo bufferInfo = {};
+	allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.pNext = VK_NULL_HANDLE;
+	allocInfo.allocationSize = 0;
+	allocInfo.memoryTypeIndex = 0;
+
+	if (mode == MODE_CREATE) bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = totalDataSize;
+	bufferInfo.usage = inpUsage;
+	if (sharing == SHARING_EXCLUSIVE) bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	VkResult result = vkCreateBuffer(inpInstance.device, &bufferInfo, nullptr, &buffer);
+	if (result != VK_SUCCESS) { RemovePast(); throw std::runtime_error("Could not create buffer"); }
+	haveBuffer = true;
+
+	vkGetBufferMemoryRequirements(inpInstance.device, buffer, &memReqs);
+	getMemoryType(&inpInstance, memReqs.memoryTypeBits, memOpts, &allocInfo.memoryTypeIndex);
+
+	try
+	{
+		subAllocId = AllocMem(inpInstance.device, allocInfo, memReqs, ((usage & USAGE_DEVICE_ADDRESS) != 0) ? DEV_ADDRESS : BUFFER, &memPtr, &offset, &len);
+		typeForSubAlloc = allocInfo.memoryTypeIndex;
+		haveSubAlloc = true;
+	}
+	catch (...)
+	{
+		RemovePast();
+		throw std::runtime_error("Could not allocate buffer memory");
+	}
+
+	result = vkBindBufferMemory(inpInstance.device, buffer, memPtr, offset);
+	if (result != VK_SUCCESS) { RemovePast(); throw std::runtime_error("Could not bind buffer to memory"); }
+
+	descriptor.buffer = buffer;
+	descriptor.offset = 0;
+	descriptor.range = totalDataSize;
+
+	if (inpData != nullptr)
+	{
+		try
+		{
+			UploadSubData(0, inpData, totalDataSize); 
+		}
+		catch (...) { RemovePast(); throw std::runtime_error("Could not upload buffer data"); }
+	}
+}
+
+void HIGHOMEGA::GL::BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void * inpData, unsigned int inpDataSize)
+{
+	totalDataSize = inpDataSize;
+
+	BufferClass bufferStaging(MEMORY_HOST_VISIBLE, inpSharing, inpMode, USAGE_SRC, inpInstance, inpData, totalDataSize);
+	new (this) BufferClass(MEMORY_DEVICE_LOCAL, inpSharing, inpMode, USAGE_DST | inpUsage, inpInstance, nullptr, totalDataSize);
+
+	VkBufferCopy copyRegion = {};
+
+	try { BeginCommandBuffer(inpInstance); }
+	catch (...) { RemovePast(); throw std::runtime_error("Could not begin setup cmd buffer for buffer creation"); }
+
+	copyRegion.size = totalDataSize;
+	vkCmdCopyBuffer(cmdBuffers[0], bufferStaging.buffer, buffer, 1, &copyRegion);
+
+	try { EndCommandBuffer(); }
+	catch (...) { RemovePast(); throw std::runtime_error("Could not end setup cmd buffer for buffer creation"); }
+
+	try { SubmitCommandBuffer(); }
+	catch (...) { RemovePast(); throw std::runtime_error("Could not submit setup cmd buffer for buffer creation"); }
+}
+			</xmp>
+			</div>
+		</div>
+	</div>
+	<h1>Acceleration Structure</h1>
+	I use the same class for BLAS and TLAS. Basically how you use it defines whether it is a BLAS or a TLAS and it is used as a base class for geometry or the scene.
+	<code>CreateAccelStruct(...)</code> creates the acceleration structure while <code>SubmitCreateAccelStruct(...)</code> really is meant for updating it.
+	<code>SubmitCreateAccelStruct(...)</code> is called at the end of <code>CreateAccelStruct(...)</code> regardless and this usage pattern should seem familiar to you.<p/>
+	In the new version the names are changed to properly reflect their intended use: <code>CreateAccelStruct(...)</code> and <code>UpdateAccelStruct(...)</code>.<p/>
+	As you can see, <code>GetScratchBufferSize(...)</code> is gone and we do not call the memory manager (i.e. <code>AllocMem(...)</code>) directly any longer.
+	This is nice as now one less class interfaces the memory manager directly.<p/>
+	Geometry is fed via <code>VkAccelerationStructureGeometryKHR</code> rather than <code>VkGeometryNV</code>.
+	User-side instance data struct <code>VkGeometryInstance</code> is no longer needed and <code>VkAccelerationStructureInstanceKHR</code> is provided via Vulkan itself.
+	Still not confident about my barrier usage: if you see an issue with it, please reach out with a correction. I haven't had a chance to look at it closely and clean it up.
+	However, the validation layer seems hunky dory with it so far.
+	<p/>
+	<div class="panel-holder">
+		<div class="left-panel">
+			<div class="panel-heading"><h2>Before...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::RemovePast()
+{
+	if (!ptrToInstance) return;
+
+	if (hasAccelStruct) RTXInstance::vkDestroyAccelerationStructureNV(ptrToInstance->device, accelStruct, nullptr);
+	if (hasSubAlloc) FreeMem(subAllocId, RTX, typeForSubAlloc, ptrToInstance->device);
+
+	hasAccelStruct = false;
+	hasSubAlloc = false;
+	ptrToInstance = nullptr;
+}
+
+VkDeviceSize HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::GetScratchBufferSize(VkAccelerationStructureNV handle, bool updateAction)
+{
+	if (!ptrToInstance) throw std::runtime_error("No way to get scratch buffer size: no ptr to Instance.");
+
+	VkAccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo;
+	memoryRequirementsInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
+	memoryRequirementsInfo.pNext = nullptr;
+	memoryRequirementsInfo.accelerationStructure = handle;
+	memoryRequirementsInfo.type = updateAction ? VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_UPDATE_SCRATCH_NV : VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_BUILD_SCRATCH_NV;
+
+	VkMemoryRequirements2 memoryRequirements;
+	RTXInstance::vkGetAccelerationStructureMemoryRequirementsNV(ptrToInstance->device, &memoryRequirementsInfo, &memoryRequirements);
+
+	VkDeviceSize result = memoryRequirements.memoryRequirements.size;
+	return result;
+}
+
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::CreateAccelStruct(bool isBlas, VkGeometryNV * inpGeom, std::vector <VkGeometryInstance> * instanceData, InstanceClass & inpInstance)
+{
+	ptrToInstance = &inpInstance;
+
+	VkAccelerationStructureCreateInfoNV accelerationStructureInfo;
+	accelerationStructureInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_NV;
+	accelerationStructureInfo.pNext = nullptr;
+	accelerationStructureInfo.compactedSize = 0;
+	accelerationStructureInfo.info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
+	accelerationStructureInfo.info.pNext = NULL;
+	accelerationStructureInfo.info.type = isBlas ? VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_NV : VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV;
+	accelerationStructureInfo.info.flags = VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_NV;
+	accelerationStructureInfo.info.instanceCount = isBlas ? 0 : (uint32_t)instanceData->size();
+	accelerationStructureInfo.info.geometryCount = isBlas ? 1 : 0;
+	accelerationStructureInfo.info.pGeometries = isBlas ? inpGeom : nullptr;
+
+	VkResult code = RTXInstance::vkCreateAccelerationStructureNV(ptrToInstance->device, &accelerationStructureInfo, nullptr, &accelStruct);
+	if (code != VK_SUCCESS) { RemovePast(); throw std::runtime_error("Could not create acceleration structure"); }
+	hasAccelStruct = true;
+
+	VkAccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo;
+	memoryRequirementsInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
+	memoryRequirementsInfo.pNext = nullptr;
+	memoryRequirementsInfo.accelerationStructure = accelStruct;
+	memoryRequirementsInfo.type = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_OBJECT_NV;
+
+	VkMemoryRequirements2 memoryRequirements;
+	RTXInstance::vkGetAccelerationStructureMemoryRequirementsNV(ptrToInstance->device, &memoryRequirementsInfo, &memoryRequirements);
+
+	VkMemoryAllocateInfo memoryAllocateInfo;
+	memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	memoryAllocateInfo.pNext = nullptr;
+	memoryAllocateInfo.allocationSize = memoryRequirements.memoryRequirements.size;
+	getMemoryType(ptrToInstance, memoryRequirements.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &memoryAllocateInfo.memoryTypeIndex);
+	try
+	{
+		subAllocId = AllocMem(ptrToInstance->device, memoryAllocateInfo, memoryRequirements.memoryRequirements, RTX, &memPtr, &offset, &len);
+		typeForSubAlloc = memoryAllocateInfo.memoryTypeIndex;
+	}
+	catch (...)
+	{
+		RemovePast();
+		throw std::runtime_error("Could not create acceleration structure memory");
+	}
+	hasSubAlloc = true;
+
+	VkBindAccelerationStructureMemoryInfoNV bindInfo;
+	bindInfo.sType = VK_STRUCTURE_TYPE_BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_NV;
+	bindInfo.pNext = nullptr;
+	bindInfo.accelerationStructure = accelStruct;
+	bindInfo.memory = memPtr;
+	bindInfo.memoryOffset = offset;
+	bindInfo.deviceIndexCount = 0;
+	bindInfo.pDeviceIndices = nullptr;
+
+	code = RTXInstance::vkBindAccelerationStructureMemoryNV(ptrToInstance->device, 1, &bindInfo);
+	if (code != VK_SUCCESS) { RemovePast(); throw std::runtime_error("Could not bind acceleration structure memory"); }
+
+	SubmitCreateAccelStruct(isBlas, inpGeom, instanceData);
+}
+
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::SubmitCreateAccelStruct(bool isBlas, VkGeometryNV * inpGeom, std::vector <VkGeometryInstance> * instanceData, bool updateAction)
+{
+	if (!ptrToInstance) throw std::runtime_error("Cannot submit create accel struct request since a ptr to instance was not found");
+
+	VkAccelerationStructureInfoNV asInfo;
+	asInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
+	asInfo.pNext = NULL;
+	asInfo.type = isBlas ? VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_NV : VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV;
+	asInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_NV;
+
+	VkDeviceSize scratchBufferSize = GetScratchBufferSize(accelStruct, updateAction);
+	if (scratchBufferSize > scratchBuffer.getSize())
+	{
+		if (scratchBuffer.getSize() > 0) scratchBuffer.~BufferClass();
+		new (&scratchBuffer) BufferClass(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_RTX, *ptrToInstance, nullptr, (unsigned int)scratchBufferSize);
+	}
+	unsigned int curInstanceBufferSize = 0;
+	if (!isBlas)
+	{
+		curInstanceBufferSize = (((((unsigned int)instanceData->size()) / 1000) + 1) * 1000) * sizeof(VkGeometryInstance);
+	}
+
+	BeginCommandBuffer(*ptrToInstance);
+	if (isBlas)
+	{
+		asInfo.instanceCount = 0;
+		asInfo.geometryCount = 1;
+		asInfo.pGeometries = inpGeom;
+		RTXInstance::vkCmdBuildAccelerationStructureNV(cmdBuffers[0], &asInfo, VK_NULL_HANDLE, 0, updateAction ? VK_TRUE : VK_FALSE, accelStruct, updateAction ? accelStruct : VK_NULL_HANDLE, scratchBuffer.buffer, 0);
+	}
+	else
+	{
+		if (instanceBuffer.getSize() < curInstanceBufferSize)
+		{
+			if (instanceBuffer.getSize() > 0)
+				instanceBuffer.~BufferClass();
+			new (&instanceBuffer) BufferClass(MEMORY_HOST_VISIBLE | MEMORY_HOST_COHERENT, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_RTX, *ptrToInstance, nullptr, curInstanceBufferSize);
+		}
+		instanceBuffer.UploadSubData(0, instanceData->data(), (unsigned int)instanceData->size() * sizeof(VkGeometryInstance));
+		asInfo.instanceCount = (uint32_t)instanceData->size();
+		asInfo.geometryCount = 0;
+		asInfo.pGeometries = nullptr;
+		RTXInstance::vkCmdBuildAccelerationStructureNV(cmdBuffers[0], &asInfo, instanceBuffer.buffer, 0, updateAction ? VK_TRUE : VK_FALSE, accelStruct, updateAction ? accelStruct : VK_NULL_HANDLE, scratchBuffer.buffer, 0);
+	}
+	EndCommandBuffer();
+	SubmitCommandBuffer();
+}
+
+HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::RTXAccelStruct()
+{
+	hasAccelStruct = false;
+	hasSubAlloc = false;
+	ptrToInstance = nullptr;
+}
+
+HIGHOMEGA::GL::NVIDIA_RTX::RTXAccelStruct::~RTXAccelStruct()
+{
+	RemovePast();
+}
+			</xmp>
+			</div>
+		</div>
+		<div class="right-panel">
+			<div class="panel-heading"><h2>After...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+void HIGHOMEGA::GL::KHR_RT::RTAccelStruct::RemovePast()
+{
+	if (!ptrToInstance) return;
+
+	if (hasAccelStruct) RTInstance::fpDestroyAccelerationStructureKHR(ptrToInstance->device, accelStruct, nullptr);
+
+	hasAccelStruct = false;
+	ptrToInstance = nullptr;
+}
+
+void HIGHOMEGA::GL::KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructureGeometryKHR * inpGeom, VkAccelerationStructureBuildRangeInfoKHR * inpGeomOffset, std::vector <VkAccelerationStructureInstanceKHR> * instanceData, InstanceClass & inpInstance)
+{
+	ptrToInstance = &inpInstance;
+
+	if (isBlas)
+	{
+		VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeomInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR };
+		accelerationStructureBuildGeomInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+		accelerationStructureBuildGeomInfo.pNext = VK_NULL_HANDLE;
+		accelerationStructureBuildGeomInfo.geometryCount = 1;
+		accelerationStructureBuildGeomInfo.pGeometries = inpGeom;
+		accelerationStructureBuildGeomInfo.ppGeometries = VK_NULL_HANDLE;
+		accelerationStructureBuildGeomInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+		accelerationStructureBuildGeomInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+		accelerationStructureBuildGeomInfo.srcAccelerationStructure = VK_NULL_HANDLE;
+		accelerationStructureBuildGeomInfo.dstAccelerationStructure = VK_NULL_HANDLE;
+
+		VkAccelerationStructureBuildSizesInfoKHR sizeInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
+		sizeInfo.pNext = VK_NULL_HANDLE;
+		RTInstance::fpGetAccelerationStructureBuildSizesKHR(Instance.device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeomInfo, &inpGeomOffset->primitiveCount, &sizeInfo);
+
+		VkAccelerationStructureCreateInfoKHR createInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR };
+		createInfo.pNext = VK_NULL_HANDLE;
+		createInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+		createInfo.size = sizeInfo.accelerationStructureSize;
+
+		new (&accelStructBuffer) BufferClass(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, nullptr, (unsigned int)createInfo.size);
+		createInfo.buffer = accelStructBuffer.buffer;
+
+		VkResult result = RTInstance::fpCreateAccelerationStructureKHR(Instance.device, &createInfo, nullptr, &accelStruct);
+		if (result != VK_SUCCESS) { RemovePast(); throw std::runtime_error("Could not create accel struct"); }
+		hasAccelStruct = true;
+		accelerationStructureBuildGeomInfo.dstAccelerationStructure = accelStruct;
+
+		BufferClass *curScratchBuffer = new BufferClass(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT | USAGE_SSBO, *ptrToInstance, nullptr, (unsigned int)sizeInfo.buildScratchSize);
+		VkBufferDeviceAddressInfo scratchBufferInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
+		scratchBufferInfo.pNext = VK_NULL_HANDLE;
+		scratchBufferInfo.buffer = curScratchBuffer->buffer;
+		VkDeviceAddress scratchAddress = RTInstance::fpGetBufferDeviceAddressKHR(Instance.device, &scratchBufferInfo);
+
+		accelerationStructureBuildGeomInfo.scratchData.deviceAddress = scratchAddress;
+
+		BeginCommandBuffer(*ptrToInstance);
+
+		std::array<VkAccelerationStructureBuildRangeInfoKHR *, 1> inpGeomOffsetArray = { inpGeomOffset };
+		VkMemoryBarrier barrier{ VK_STRUCTURE_TYPE_MEMORY_BARRIER };
+		barrier.pNext = VK_NULL_HANDLE;
+		barrier.srcAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+		barrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+		vkCmdPipelineBarrier(cmdBuffers[0], VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &barrier, 0, nullptr, 0, nullptr);
+
+		RTInstance::fpCmdBuildAccelerationStructuresKHR(cmdBuffers[0], 1, &accelerationStructureBuildGeomInfo, inpGeomOffsetArray.data());
+
+		VkMemoryBarrier barrier2{ VK_STRUCTURE_TYPE_MEMORY_BARRIER };
+		barrier2.pNext = VK_NULL_HANDLE;
+		barrier2.srcAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+		barrier2.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+		vkCmdPipelineBarrier(cmdBuffers[0], VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &barrier2, 0, nullptr, 0, nullptr);
+
+		EndCommandBuffer();
+		SubmitCommandBuffer();
+
+		delete curScratchBuffer;
+	}
+	else
+	{
+		unsigned int curInstanceBufSize = (unsigned int)instanceData->size() * sizeof(VkAccelerationStructureInstanceKHR);
+		
+		if (instanceBuffer.getSize() < curInstanceBufSize)
+		{
+			if (instanceBuffer.getSize() > 0)
+				instanceBuffer.~BufferClass();
+			new (&instanceBuffer) BufferClass(MEMORY_HOST_VISIBLE | MEMORY_HOST_COHERENT, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT | USAGE_SSBO, *ptrToInstance, instanceData->data(), curInstanceBufSize);
+		}
+
+		VkBufferDeviceAddressInfo bufferInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
+		bufferInfo.buffer = instanceBuffer.buffer;
+		VkDeviceAddress instanceAddress = RTInstance::fpGetBufferDeviceAddressKHR(Instance.device, &bufferInfo);
+
+		BeginCommandBuffer(*ptrToInstance);
+
+		VkMemoryBarrier barrier{ VK_STRUCTURE_TYPE_MEMORY_BARRIER };
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+		vkCmdPipelineBarrier(cmdBuffers[0], VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &barrier, 0, nullptr, 0, nullptr);
+
+		VkAccelerationStructureGeometryInstancesDataKHR instancesVk{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR };
+		instancesVk.arrayOfPointers = VK_FALSE;
+		instancesVk.data.deviceAddress = instanceAddress;
+
+		VkAccelerationStructureGeometryKHR topASGeometry{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR };
+		topASGeometry.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
+		topASGeometry.geometry.instances = instancesVk;
+
+		VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeomInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR };
+		accelerationStructureBuildGeomInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+		accelerationStructureBuildGeomInfo.geometryCount = 1;
+		accelerationStructureBuildGeomInfo.pGeometries = &topASGeometry;
+		accelerationStructureBuildGeomInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+		accelerationStructureBuildGeomInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+		accelerationStructureBuildGeomInfo.srcAccelerationStructure = VK_NULL_HANDLE;
+		uint32_t instanceCount = (uint32_t)instanceData->size();
+		VkAccelerationStructureBuildSizesInfoKHR sizeInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
+		RTInstance::fpGetAccelerationStructureBuildSizesKHR(Instance.device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeomInfo, &instanceCount, &sizeInfo);
+
+		VkAccelerationStructureCreateInfoKHR createInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR };
+		createInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+		createInfo.size = sizeInfo.accelerationStructureSize;
+
+		new (&accelStructBuffer) BufferClass(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, nullptr, (unsigned int)createInfo.size);
+		createInfo.buffer = accelStructBuffer.buffer;
+
+		VkResult result = RTInstance::fpCreateAccelerationStructureKHR(Instance.device, &createInfo, nullptr, &accelStruct);
+		if (result != VK_SUCCESS) { RemovePast(); throw std::runtime_error("Could not create accel struct"); }
+		hasAccelStruct = true;
+		accelerationStructureBuildGeomInfo.srcAccelerationStructure = VK_NULL_HANDLE;
+		accelerationStructureBuildGeomInfo.dstAccelerationStructure = accelStruct;
+
+		BufferClass *curScratchBuffer = new BufferClass(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT | USAGE_SSBO, *ptrToInstance, nullptr, (unsigned int)sizeInfo.buildScratchSize);
+		VkBufferDeviceAddressInfo scratchBufferInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
+		scratchBufferInfo.buffer = curScratchBuffer->buffer;
+		VkDeviceAddress scratchAddress = RTInstance::fpGetBufferDeviceAddressKHR(Instance.device, &scratchBufferInfo);
+
+		accelerationStructureBuildGeomInfo.scratchData.deviceAddress = scratchAddress;
+
+		VkAccelerationStructureBuildRangeInfoKHR buildOffsetInfo{ static_cast<uint32_t>(instanceCount), 0, 0, 0 };
+		const VkAccelerationStructureBuildRangeInfoKHR* pBuildOffsetInfo = &buildOffsetInfo;
+		RTInstance::fpCmdBuildAccelerationStructuresKHR(cmdBuffers[0], 1, &accelerationStructureBuildGeomInfo, &pBuildOffsetInfo);
+
+		EndCommandBuffer();
+		SubmitCommandBuffer();
+
+		delete curScratchBuffer;
+	}
+}
+
+void HIGHOMEGA::GL::KHR_RT::RTAccelStruct::UpdateAccelStruct(bool isBlas, VkAccelerationStructureGeometryKHR * inpGeom, VkAccelerationStructureBuildRangeInfoKHR * inpGeomOffset, std::vector <VkAccelerationStructureInstanceKHR> * instanceData)
+{
+	if (!ptrToInstance) throw std::runtime_error("Cannot submit create accel struct request since a ptr to instance was not found");
+
+	if (isBlas)
+	{
+		VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeomInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR };
+		accelerationStructureBuildGeomInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+		accelerationStructureBuildGeomInfo.geometryCount = 1;
+		accelerationStructureBuildGeomInfo.pGeometries = inpGeom;
+		accelerationStructureBuildGeomInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR;
+		accelerationStructureBuildGeomInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+		accelerationStructureBuildGeomInfo.srcAccelerationStructure = accelStruct;
+		accelerationStructureBuildGeomInfo.dstAccelerationStructure = accelStruct;
+
+		VkAccelerationStructureBuildSizesInfoKHR sizeInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
+		RTInstance::fpGetAccelerationStructureBuildSizesKHR(ptrToInstance->device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeomInfo, &inpGeomOffset->primitiveCount, &sizeInfo);
+
+		BufferClass *curScratchBuffer = new BufferClass(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, nullptr, (unsigned int)sizeInfo.buildScratchSize);
+		VkBufferDeviceAddressInfo scratchBufferInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
+		scratchBufferInfo.buffer = curScratchBuffer->buffer;
+		VkDeviceAddress scratchAddress = RTInstance::fpGetBufferDeviceAddressKHR(Instance.device, &scratchBufferInfo);
+
+		accelerationStructureBuildGeomInfo.scratchData.deviceAddress = scratchAddress;
+
+		BeginCommandBuffer(*ptrToInstance);
+		RTInstance::fpCmdBuildAccelerationStructuresKHR(cmdBuffers[0], 1, &accelerationStructureBuildGeomInfo, &inpGeomOffset);
+		EndCommandBuffer();
+		SubmitCommandBuffer();
+
+		delete curScratchBuffer;
+	}
+	else
+	{
+		unsigned int curInstanceBufSize = (unsigned int)instanceData->size() * sizeof(VkAccelerationStructureInstanceKHR);
+
+		if (instanceBuffer.getSize() < curInstanceBufSize)
+		{
+			if (instanceBuffer.getSize() > 0)
+				instanceBuffer.~BufferClass();
+			new (&instanceBuffer) BufferClass(MEMORY_HOST_VISIBLE | MEMORY_HOST_COHERENT, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, instanceData->data(), curInstanceBufSize);
+		}
+
+		VkBufferDeviceAddressInfo bufferInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
+		bufferInfo.buffer = instanceBuffer.buffer;
+		VkDeviceAddress instanceAddress = RTInstance::fpGetBufferDeviceAddressKHR(Instance.device, &bufferInfo);
+
+		BeginCommandBuffer(*ptrToInstance);
+
+		VkMemoryBarrier barrier{ VK_STRUCTURE_TYPE_MEMORY_BARRIER };
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+		vkCmdPipelineBarrier(cmdBuffers[0], VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &barrier, 0, nullptr, 0, nullptr);
+
+		VkAccelerationStructureGeometryInstancesDataKHR instancesVk{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR };
+		instancesVk.arrayOfPointers = VK_FALSE;
+		instancesVk.data.deviceAddress = instanceAddress;
+
+		VkAccelerationStructureGeometryKHR topASGeometry{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR };
+		topASGeometry.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
+		topASGeometry.geometry.instances = instancesVk;
+
+		VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeomInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR };
+		accelerationStructureBuildGeomInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+		accelerationStructureBuildGeomInfo.geometryCount = 1;
+		accelerationStructureBuildGeomInfo.pGeometries = &topASGeometry;
+		accelerationStructureBuildGeomInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR;
+		accelerationStructureBuildGeomInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+		accelerationStructureBuildGeomInfo.srcAccelerationStructure = VK_NULL_HANDLE;
+		uint32_t instanceCount = (uint32_t)instanceData->size();
+		VkAccelerationStructureBuildSizesInfoKHR sizeInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
+		RTInstance::fpGetAccelerationStructureBuildSizesKHR(Instance.device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeomInfo, &instanceCount, &sizeInfo);
+
+		accelerationStructureBuildGeomInfo.srcAccelerationStructure = accelStruct;
+		accelerationStructureBuildGeomInfo.dstAccelerationStructure = accelStruct;
+
+		BufferClass *curScratchBuffer = new BufferClass(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, nullptr, (unsigned int)sizeInfo.buildScratchSize);
+		VkBufferDeviceAddressInfo scratchBufferInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
+		scratchBufferInfo.buffer = curScratchBuffer->buffer;
+		VkDeviceAddress scratchAddress = RTInstance::fpGetBufferDeviceAddressKHR(Instance.device, &scratchBufferInfo);
+
+		accelerationStructureBuildGeomInfo.scratchData.deviceAddress = scratchAddress;
+
+		VkAccelerationStructureBuildRangeInfoKHR buildOffsetInfo{ static_cast<uint32_t>(instanceCount), 0, 0, 0 };
+		const VkAccelerationStructureBuildRangeInfoKHR* pBuildOffsetInfo = &buildOffsetInfo;
+		RTInstance::fpCmdBuildAccelerationStructuresKHR(cmdBuffers[0], 1, &accelerationStructureBuildGeomInfo, &pBuildOffsetInfo);
+
+		EndCommandBuffer();
+		SubmitCommandBuffer();
+
+		delete curScratchBuffer;
+	}
+}
+
+HIGHOMEGA::GL::KHR_RT::RTAccelStruct::RTAccelStruct()
+{
+	hasAccelStruct = false;
+	ptrToInstance = nullptr;
+}
+
+HIGHOMEGA::GL::KHR_RT::RTAccelStruct::~RTAccelStruct()
+{
+	RemovePast();
+}
+			</xmp>
+			</div>
+		</div>
+	</div>
+	<h1>Geometry (BLAS abstraction)</h1>
+	RTXGeometry class is simply an amendment to regular vertex buffers. It allows any geometry to turn into an acceleration structure in case it needs to (when hardware raytracing is available).
+	It inherits the acceleration structure base class described above.<p/>
+	Please note where I erroneously set <code>traceGeom.geometry.aabbs</code> without really providing any real further data. I can't recall why I ever set this. I'm tempted to blame an old tutorial copy-paste situation.<p/>
+	<u>Doing this with KHR_raytracing will give you a nasty data corruption case that will take you days to debug as <code>traceGeom.geometry.aabbs</code> overlaps as a union with <code>traceGeom.geometry.triangles</code>.</u>
+	<div class="panel-holder">
+		<div class="left-panel">
+			<div class="panel-heading"><h2>Before...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+HIGHOMEGA::GL::NVIDIA_RTX::RTXGeometry::RTXGeometry()
+{
+	ptrToInstance = nullptr;
+	created = false;
+	dirty = false;
+}
+
+HIGHOMEGA::GL::NVIDIA_RTX::RTXGeometry::~RTXGeometry()
+{
+	ptrToInstance = nullptr;
+	created = false;
+	dirty = false;
+}
+
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXGeometry::SetGeom(BufferClass & vertBuffer, unsigned int vertexSize, bool isAlphaKeyed, InstanceClass & inpInstance)
+{
+	if (vertBuffer.getSize() == 0) return;
+
+	completeVertexBufferRef = &vertBuffer;
+
+	ptrToInstance = &inpInstance;
+
+	traceGeom = {};
+	traceGeom.sType = VK_STRUCTURE_TYPE_GEOMETRY_NV;
+	traceGeom.pNext = nullptr;
+	traceGeom.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_NV;
+	traceGeom.geometry.triangles.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
+	traceGeom.geometry.triangles.pNext = nullptr;
+	traceGeom.geometry.triangles.vertexData = vertBuffer.buffer;
+	traceGeom.geometry.triangles.vertexOffset = 0;
+	traceGeom.geometry.triangles.vertexCount = vertBuffer.getSize() / vertexSize;
+	traceGeom.geometry.triangles.vertexStride = vertexSize;
+	traceGeom.geometry.triangles.vertexFormat = (VkFormat)R32G32B32F;
+	traceGeom.geometry.triangles.indexData = VK_NULL_HANDLE;
+	traceGeom.geometry.triangles.indexOffset = 0;
+	traceGeom.geometry.triangles.indexCount = 0;
+	traceGeom.geometry.triangles.indexType = VK_INDEX_TYPE_NONE_NV;
+	traceGeom.geometry.triangles.transformData = VK_NULL_HANDLE;
+	traceGeom.geometry.triangles.transformOffset = 0;
+	traceGeom.geometry.aabbs = { }; // Do not write any of these two lines... remove!
+	traceGeom.geometry.aabbs.sType = VK_STRUCTURE_TYPE_GEOMETRY_AABB_NV; // Yeah, remove this too!
+	if (!isAlphaKeyed) traceGeom.flags = VK_GEOMETRY_OPAQUE_BIT_NV;
+
+	dirty = true;
+}
+
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXGeometry::CreateOrUpdate()
+{
+	if (!created)
+	{
+		CreateAccelStruct(true, &traceGeom, nullptr, *ptrToInstance);
+		created = true;
+		dirty = false;
+	}
+	if (dirty)
+	{
+		SubmitCreateAccelStruct(true, &traceGeom, nullptr, true);
+		dirty = false;
+	}
+}
+
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXGeometry::SetDirty()
+{
+	// This should be called when geometry changes inside a shader...
+	dirty = true;
+}
+			</xmp>
+			</div>
+		</div>
+		<div class="right-panel">
+			<div class="panel-heading"><h2>After...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+HIGHOMEGA::GL::KHR_RT::RTGeometry::RTGeometry()
+{
+	ptrToInstance = nullptr;
+	created = false;
+	dirty = false;
+}
+
+HIGHOMEGA::GL::KHR_RT::RTGeometry::~RTGeometry()
+{
+	ptrToInstance = nullptr;
+	created = false;
+	dirty = false;
+}
+
+void HIGHOMEGA::GL::KHR_RT::RTGeometry::SetGeom(BufferClass & vertBuffer, unsigned int vertexSize, bool isAlphaKeyed, InstanceClass & inpInstance)
+{
+	if (vertBuffer.getSize() == 0) return;
+
+	completeVertexBufferRef = &vertBuffer;
+
+	ptrToInstance = &inpInstance;
+
+	VkBufferDeviceAddressInfo bufDevAdInfo;
+	bufDevAdInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+	bufDevAdInfo.pNext = VK_NULL_HANDLE;
+	bufDevAdInfo.buffer = vertBuffer.buffer;
+	bufferDeviceAddress = RTInstance::fpGetBufferDeviceAddressKHR(Instance.device, &bufDevAdInfo);
+
+	traceGeom = {};
+	traceGeom.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+	traceGeom.pNext = nullptr;
+	traceGeom.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+	traceGeom.geometry.triangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+	traceGeom.geometry.triangles.pNext = nullptr;
+	traceGeom.geometry.triangles.vertexFormat = (VkFormat)R32G32B32F;
+	traceGeom.geometry.triangles.vertexData.deviceAddress = bufferDeviceAddress;
+	traceGeom.geometry.triangles.vertexStride = vertexSize;
+	traceGeom.geometry.triangles.maxVertex = vertBuffer.getSize() / vertexSize;
+	traceGeom.geometry.triangles.indexData.deviceAddress = (VkDeviceAddress)0;
+	traceGeom.geometry.triangles.indexType = VK_INDEX_TYPE_NONE_KHR;
+	traceGeom.geometry.triangles.transformData.deviceAddress = (VkDeviceAddress)0;
+	if (!isAlphaKeyed) traceGeom.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+
+	traceGeomOffset = {};
+	traceGeomOffset.firstVertex = 0;
+	traceGeomOffset.primitiveCount = vertBuffer.getSize() / (vertexSize * 3);
+	traceGeomOffset.primitiveOffset = 0;
+	traceGeomOffset.transformOffset = 0;
+
+	dirty = true;
+}
+
+void HIGHOMEGA::GL::KHR_RT::RTGeometry::CreateOrUpdate()
+{
+	if (!created)
+	{
+		CreateAccelStruct(true, &traceGeom, &traceGeomOffset, nullptr, *ptrToInstance);
+		created = true;
+		dirty = false;
+	}
+	if (dirty)
+	{
+		UpdateAccelStruct(true, &traceGeom, &traceGeomOffset, nullptr);
+		dirty = false;
+	}
+}
+
+void HIGHOMEGA::GL::KHR_RT::RTGeometry::SetDirty()
+{
+	// This should be called when geometry changes inside a shader...
+	dirty = true;
+}
+			</xmp>
+			</div>
+		</div>
+	</div>
+	<p/>
+	<h1>The Scene (TLAS abstraction)</h1>
+	This is the code that handles all top-level scene stuff.<p/>
+	<code>InstanceClass</code> is a Vulkan instance and <code>InstanceProperties</code> is a geometry instance property struct. Don't get them confused.<p/>
+	You won't necessarily see what will happen to <code>material</code> here. It will be used later to build a variable count descriptor set for materials.<p/>
+	Here's something that might catch your attention. In both <code>Add(...)</code> and <code>Update(...)</code> I'm setting the instance transform to identity.
+	Why you might ask? At some point I decided to back ALL geometry with dedicated (though sub-allocated) buffers. Almost everything is transformed in compute (skinned meshes, rigid bodies, brushes, particles etc.). I don't even think I call <code>Update(...)</code> anywhere anymore.
+	It reduces rework in vertex shaders, especially when rendering the same geometry in different passes; I still do a shadow map for stained glass. Plus that shadow map is needed for sun/moon visiblity with the Compact LBVH pipeline.<p/>
+	You may not -- and probably are not -- doing this. Modifying this code to supply an affine transformation matrix is trivial.<p/>
+	In terms of Vulkan related material, most of what you should focus on is how <code>curInst</code> is set. Especially the fact that a buffer device address is fed in rather than a buffer handle.
+	The call to <code>GetAccelerationStructureHandle</code> is more or less defensive programming... just making sure the acceleration structure handle is up-to-date in case it wasn't recreated.
+	<div class="panel-holder">
+		<div class="left-panel">
+			<div class="panel-heading"><h2>Before...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::RemovePast()
+{
+	if (!ptrToInstance) return;
+
+	needUpdate = false;
+	needReCreation = false;
+	ptrToInstance = nullptr;
+	createdEssentials = false;
+	signifyNewScene = false;
+}
+
+HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::RTXScene()
+{
+	needUpdate = false;
+	needReCreation = false;
+	ptrToInstance = nullptr;
+	createdEssentials = false;
+	signifyNewScene = false;
+}
+
+HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::~RTXScene()
+{
+	RemovePast();
+}
+
+TraceItem HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::Add(std::vector <ImageClass *> & material, RTXGeometry & geom, InstanceProperties & inpInstanceProps, InstanceClass & inpInstance)
+{
+	if (!ptrToInstance) ptrToInstance = &inpInstance;
+
+	if (geom.dirty || !geom.created)
+	{
+		if (!geom.created) needReCreation = true;
+		needUpdate = true;
+		geom.CreateOrUpdate();
+	}
+
+	TraceItem retVal;
+	retVal.geomRef = &geom;
+	retVal.material = material;
+	retVal.instanceData = inpInstanceProps;
+
+	retVal.itemId = marseneTwister64BitPRNG ();
+
+	uint64_t accelerationStructureHandle;
+	VkResult code = RTXInstance::vkGetAccelerationStructureHandleNV(ptrToInstance->device, geom.accelStruct, sizeof(uint64_t), &accelerationStructureHandle);
+	if (code != VK_SUCCESS) { throw std::runtime_error("Could not get opaque handle for accel struct"); }
+
+	VkGeometryInstance curInst;
+	for (int i = 0; i != 12; i++)
+		curInst.transform[i] = ((i % 4) == (i / 4)) ? 1.0f : 0.0f;
+
+	curInst.instanceId = 0; // This will be assigned later
+	curInst.mask = 0xff;
+	curInst.instanceOffset = 0;
+	curInst.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_CULL_DISABLE_BIT_NV;
+	curInst.accelerationStructureHandle = accelerationStructureHandle;
+
+	retVal.rtxInstanceData = curInst;
+
+	allTraceItems[retVal.itemId] = retVal;
+	needReCreation = true;
+
+	return retVal;
+}
+
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::Update(TraceItem inpTraceItem, InstanceProperties & inpInstanceProps)
+{
+	TraceItem & curItem = allTraceItems[inpTraceItem.itemId];
+	for (int i = 0; i != 12; i++)
+		curItem.rtxInstanceData.transform[i] = ((i % 4) == (i / 4)) ? 1.0f : 0.0f;
+	curItem.instanceData = inpInstanceProps;
+	needUpdate = true;
+}
+
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::Remove(TraceItem inpTraceItem)
+{
+	allTraceItems.erase(inpTraceItem.itemId);
+	needReCreation = true;
+}
+
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::CreateOrRecreate()
+{
+	if (createdEssentials) RTXAccelStruct::~RTXAccelStruct();
+	createdEssentials = true;
+
+	CreateInstanceData(instances);
+
+	try { CreateAccelStruct(false, nullptr, &instances, *ptrToInstance); }
+	catch (...) { RemovePast(); throw; }
+}
+
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::CreateInstanceData(std::vector <VkGeometryInstance> & instances)
+{
+	instances.clear();
+	instances.reserve(allTraceItems.size());
+
+	unsigned int bufferInstanceCount = (((unsigned int)allTraceItems.size() / 1000) + 1) * 1000;
+
+	allInstanceData.clear();
+	allInstanceData.reserve(bufferInstanceCount);
+	if (instancePropertiesBuffer.getSize() / sizeof(InstanceProperties) < bufferInstanceCount)
+	{
+		if (instancePropertiesBuffer.getSize() > 0) { instancePropertiesBuffer.~BufferClass(); }
+		new (&instancePropertiesBuffer) BufferClass(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SSBO, *ptrToInstance, nullptr, bufferInstanceCount * sizeof(InstanceProperties));
+	}
+
+	unsigned int instanceIdCount = 0;
+	for (std::pair<const unsigned long long, TraceItem> & traceItemKV : allTraceItems)
+	{
+		traceItemKV.second.rtxInstanceData.instanceId = instanceIdCount;
+		instances.push_back(traceItemKV.second.rtxInstanceData);
+		allInstanceData.push_back(traceItemKV.second.instanceData);
+		instanceIdCount++;
+	}
+
+	instancePropertiesBuffer.UploadSubData(0, allInstanceData.data(), (unsigned int)allInstanceData.size() * sizeof(InstanceProperties));
+}
+
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::Refresh()
+{
+	for (std::pair <const unsigned long long, TraceItem> & curTraceItemKV : allTraceItems)
+	{
+		TraceItem & curTraceItem = curTraceItemKV.second;
+		if (curTraceItem.geomRef->dirty || !curTraceItem.geomRef->created)
+		{
+			bool thisPieceNeedsRecreation = false;
+			if (!curTraceItem.geomRef->created)
+			{
+				needReCreation = true;
+				thisPieceNeedsRecreation = true;
+			}
+			needUpdate = true;
+			curTraceItem.geomRef->CreateOrUpdate();
+			if (thisPieceNeedsRecreation)
+			{
+				uint64_t accelerationStructureHandle;
+				VkResult code = RTXInstance::vkGetAccelerationStructureHandleNV(ptrToInstance->device, curTraceItem.geomRef->accelStruct, sizeof(uint64_t), &accelerationStructureHandle);
+				if (code != VK_SUCCESS) { throw std::runtime_error("Could not get opaque handle for accel struct"); }
+
+				curTraceItem.rtxInstanceData.accelerationStructureHandle = accelerationStructureHandle;
+			}
+		}
+	}
+
+	if (needReCreation)
+	{
+		CreateOrRecreate();
+		needReCreation = false;
+		needUpdate = false;
+		signifyNewScene = true;
+	}
+
+	if (needUpdate)
+	{
+		CreateInstanceData(instances);
+
+		SubmitCreateAccelStruct(false, nullptr, &instances, true);
+		needUpdate = false;
+	}
+}
+
+bool HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::IsSceneNew()
+{
+	return signifyNewScene;
+}
+
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXScene::MarkSceneOld()
+{
+	signifyNewScene = false;
+}
+			</xmp>
+			</div>
+		</div>
+		<div class="right-panel">
+			<div class="panel-heading"><h2>After...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+void HIGHOMEGA::GL::KHR_RT::RTScene::RemovePast()
+{
+	if (!ptrToInstance) return;
+
+	needUpdate = false;
+	needReCreation = false;
+	ptrToInstance = nullptr;
+	createdEssentials = false;
+	signifyNewScene = false;
+}
+
+HIGHOMEGA::GL::KHR_RT::RTScene::RTScene()
+{
+	needUpdate = false;
+	needReCreation = false;
+	ptrToInstance = nullptr;
+	createdEssentials = false;
+	signifyNewScene = false;
+}
+
+HIGHOMEGA::GL::KHR_RT::RTScene::~RTScene()
+{
+	RemovePast();
+}
+
+TraceItem HIGHOMEGA::GL::KHR_RT::RTScene::Add(std::vector <ImageClass *> & material, RTGeometry & geom, InstanceProperties & inpInstanceProps, InstanceClass & inpInstance)
+{
+	if (!ptrToInstance) ptrToInstance = &inpInstance;
+
+	if (geom.dirty || !geom.created)
+	{
+		if (!geom.created) needReCreation = true;
+		needUpdate = true;
+		geom.CreateOrUpdate();
+	}
+
+	TraceItem retVal;
+	retVal.geomRef = &geom;
+	retVal.material = material;
+	retVal.instanceData = inpInstanceProps;
+
+	retVal.itemId = marseneTwister64BitPRNG ();
+
+	VkAccelerationStructureDeviceAddressInfoKHR addressInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR };
+	addressInfo.accelerationStructure = geom.accelStruct;
+	VkDeviceAddress blasAddress = RTInstance::fpGetAccelerationStructureDeviceAddressKHR(inpInstance.device, &addressInfo);
+
+	VkAccelerationStructureInstanceKHR curInst;
+	for (int i = 0; i != 3; i++)
+		for (int j = 0; j != 4; j++)
+			curInst.transform.matrix[i][j] = (i == j) ? 1.0f : 0.0f;
+
+	curInst.instanceCustomIndex = 0; // This will be assigned later
+	curInst.mask = 0xff;
+	curInst.instanceShaderBindingTableRecordOffset = 0;
+	curInst.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+	curInst.accelerationStructureReference = blasAddress;
+
+	retVal.rtInstanceData = curInst;
+
+	allTraceItems[retVal.itemId] = retVal;
+	needReCreation = true;
+
+	return retVal;
+}
+
+void HIGHOMEGA::GL::KHR_RT::RTScene::Update(TraceItem inpTraceItem, InstanceProperties & inpInstanceProps)
+{
+	TraceItem & curItem = allTraceItems[inpTraceItem.itemId];
+	curItem.instanceData = inpInstanceProps;
+	needUpdate = true;
+}
+
+void HIGHOMEGA::GL::KHR_RT::RTScene::Remove(TraceItem inpTraceItem)
+{
+	allTraceItems.erase(inpTraceItem.itemId);
+	needReCreation = true;
+}
+
+void HIGHOMEGA::GL::KHR_RT::RTScene::CreateOrRecreate()
+{
+	if (createdEssentials) RTAccelStruct::~RTAccelStruct();
+	createdEssentials = true;
+
+	CreateInstanceData(instances);
+
+	try { CreateAccelStruct(false, nullptr, nullptr, &instances, *ptrToInstance); }
+	catch (...) { RemovePast(); throw; }
+}
+
+void HIGHOMEGA::GL::KHR_RT::RTScene::CreateInstanceData(std::vector <VkAccelerationStructureInstanceKHR> & instances)
+{
+	instances.clear();
+	instances.reserve(allTraceItems.size());
+
+	unsigned int bufferInstanceCount = (((unsigned int)allTraceItems.size() / 1000) + 1) * 1000;
+
+	allInstanceData.clear();
+	allInstanceData.reserve(bufferInstanceCount);
+	if (instancePropertiesBuffer.getSize() / sizeof(InstanceProperties) < bufferInstanceCount)
+	{
+		if (instancePropertiesBuffer.getSize() > 0) { instancePropertiesBuffer.~BufferClass(); }
+		new (&instancePropertiesBuffer) BufferClass(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SSBO, *ptrToInstance, nullptr, bufferInstanceCount * sizeof(InstanceProperties));
+	}
+
+	unsigned int instanceIdCount = 0;
+	for (std::pair<const unsigned long long, TraceItem> & traceItemKV : allTraceItems)
+	{
+		traceItemKV.second.rtInstanceData.instanceCustomIndex = instanceIdCount;
+		instances.push_back(traceItemKV.second.rtInstanceData);
+		allInstanceData.push_back(traceItemKV.second.instanceData);
+		instanceIdCount++;
+	}
+
+	instancePropertiesBuffer.UploadSubData(0, allInstanceData.data(), (unsigned int)allInstanceData.size() * sizeof(InstanceProperties));
+}
+
+void HIGHOMEGA::GL::KHR_RT::RTScene::Refresh()
+{
+	for (std::pair <const unsigned long long, TraceItem> & curTraceItemKV : allTraceItems)
+	{
+		TraceItem & curTraceItem = curTraceItemKV.second;
+		if (curTraceItem.geomRef->dirty || !curTraceItem.geomRef->created)
+		{
+			bool thisPieceNeedsRecreation = false;
+			if (!curTraceItem.geomRef->created)
+			{
+				needReCreation = true;
+				thisPieceNeedsRecreation = true;
+			}
+			needUpdate = true;
+			curTraceItem.geomRef->CreateOrUpdate();
+			if (thisPieceNeedsRecreation)
+			{
+				VkAccelerationStructureDeviceAddressInfoKHR addressInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR };
+				addressInfo.accelerationStructure = curTraceItem.geomRef->accelStruct;
+
+				curTraceItem.rtInstanceData.accelerationStructureReference = RTInstance::fpGetAccelerationStructureDeviceAddressKHR(ptrToInstance->device, &addressInfo);
+			}
+		}
+	}
+
+	if (needReCreation)
+	{
+		CreateOrRecreate();
+		needReCreation = false;
+		needUpdate = false;
+		signifyNewScene = true;
+	}
+
+	if (needUpdate)
+	{
+		CreateInstanceData(instances);
+
+		UpdateAccelStruct(false, nullptr, nullptr, &instances);
+		needUpdate = false;
+	}
+}
+
+bool HIGHOMEGA::GL::KHR_RT::RTScene::IsSceneNew()
+{
+	return signifyNewScene;
+}
+
+void HIGHOMEGA::GL::KHR_RT::RTScene::MarkSceneOld()
+{
+	signifyNewScene = false;
+}
+			</xmp>
+			</div>
+		</div>
+	</div>
+	<h1>Raytracing Pipelines</h1>
+	This section is interesting. Because in truth there were three transitions and not two. It seems like originally there were no alignment issues to be cognizant of with the VK_NV_raytracing extensions.<p/>
+	I suspect that with VK_KHR_raytracing's debug layer being hashed out, I believe nVidia was forced to retroactively change some of their own requirements to make you do all the alignment work.<p/>
+	This effectively stayed with VK_KHR_raytracing and the final change was minimal.
+	<div class="panel-holder">
+		<div class="left-panel-third">
+			<div class="panel-heading"><h2>Originally...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::ErasePipelineState()
+{
+	if (!ptrToInstance) return;
+
+	if (haveRTXPipeline) vkDestroyPipeline(ptrToInstance->device, pipeline, nullptr);
+	if (havePipelineLayout) vkDestroyPipelineLayout(ptrToInstance->device, pipelineLayout, nullptr);
+	if (havePipelineCache) vkDestroyPipelineCache(ptrToInstance->device, pipelineCache, nullptr);
+
+	havePipelineLayout = false;
+	haveRTXPipeline = false;
+	havePipelineCache = false;
+	ptrToInstance = nullptr;
+}
+
+HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass()
+{
+	havePipelineLayout = false;
+	haveRTXPipeline = false;
+	havePipelineCache = false;
+	ptrToInstance = nullptr;
+}
+
+HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass(InstanceClass & renderInst, DescriptorSetLayout & DescSetLayout, ShaderResourceSet & inpShader)
+{
+	ptrToInstance = &renderInst;
+
+	VkPipelineLayoutCreateInfo pPipelineLayoutCreateInfo = {};
+	pPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pPipelineLayoutCreateInfo.pNext = VK_NULL_HANDLE;
+	pPipelineLayoutCreateInfo.setLayoutCount = (uint32_t)DescSetLayout.descriptorSetLayouts.size();
+	pPipelineLayoutCreateInfo.pSetLayouts = DescSetLayout.descriptorSetLayouts.data();
+
+	VkResult result = vkCreatePipelineLayout(ptrToInstance->device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayout);
+	if (result != VK_SUCCESS) { ErasePipelineState(); throw std::runtime_error("Could not create pipeline layout"); }
+	havePipelineLayout = true;
+
+	try { shaderStages.push_back(AddOrFindCachedShaderStage(*ptrToInstance, inpShader.rtx_raygen_shader, inpShader.getRaygenEntry(), VK_SHADER_STAGE_RAYGEN_BIT_NV)->elem.stage); }
+	catch (...) { ErasePipelineState(); throw std::runtime_error("Could not create raygen shader"); }
+	try { shaderStages.push_back(AddOrFindCachedShaderStage(*ptrToInstance, inpShader.rtx_raymiss_shader, inpShader.getRaymissEntry(), VK_SHADER_STAGE_MISS_BIT_NV)->elem.stage); }
+	catch (...) { ErasePipelineState(); throw std::runtime_error("Could not create raymiss shader"); }
+	try { shaderStages.push_back(AddOrFindCachedShaderStage(*ptrToInstance, inpShader.rtx_raychit_shader, inpShader.getRaychitEntry(), VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV)->elem.stage); }
+	catch (...) { ErasePipelineState(); throw std::runtime_error("Could not create raychit shader"); }
+	if (inpShader.getRayahitEntry())
+	{
+		try { shaderStages.push_back(AddOrFindCachedShaderStage(*ptrToInstance, inpShader.rtx_rayahit_shader, inpShader.getRayahitEntry(), VK_SHADER_STAGE_ANY_HIT_BIT_NV)->elem.stage); }
+		catch (...) { ErasePipelineState(); throw std::runtime_error("Could not create rayahit shader"); }
+	}
+
+	shaderGroups.push_back({ VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV, nullptr, VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV, 0, VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV });
+	shaderGroups.push_back({ VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV, nullptr, VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV, 1, VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV });
+	shaderGroups.push_back({ VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV, nullptr, VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_NV, VK_SHADER_UNUSED_NV, 2, inpShader.getRayahitEntry() ? 3 : VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV });
+
+	VkRayTracingPipelineCreateInfoNV pipelineCreateInfo = {};
+	pipelineCreateInfo.stageCount = (uint32_t)shaderStages.size();
+	pipelineCreateInfo.pStages = shaderStages.data();
+	pipelineCreateInfo.groupCount = (uint32_t)shaderGroups.size();
+	pipelineCreateInfo.pGroups = shaderGroups.data();
+	pipelineCreateInfo.maxRecursionDepth = 8;
+	pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_NV;
+	pipelineCreateInfo.layout = pipelineLayout;
+
+	VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
+	pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+	result = vkCreatePipelineCache(ptrToInstance->device, &pipelineCacheCreateInfo, nullptr, &pipelineCache);
+	if (result != VK_SUCCESS) { throw std::runtime_error("Could not create a pipeline cache"); }
+	havePipelineCache = true;
+
+	result = RTXInstance::vkCreateRayTracingPipelinesNV(ptrToInstance->device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline);
+	if (result != VK_SUCCESS) { ErasePipelineState(); throw std::runtime_error("Could not create rtx pipeline"); }
+	haveRTXPipeline = true;
+
+	uint32_t shaderBindingTableSize = RTXInstance::raytracingProperties.shaderGroupHandleSize * (uint32_t)shaderGroups.size();
+
+	new (&shaderBindingTable) BufferClass(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SRC, Instance, nullptr, shaderBindingTableSize);
+	unsigned char *sbtData = new unsigned char[shaderBindingTableSize];
+
+	result = RTXInstance::vkGetRayTracingShaderGroupHandlesNV(ptrToInstance->device, pipeline, 0, (uint32_t)shaderGroups.size(), shaderBindingTableSize, sbtData);
+	if (result != VK_SUCCESS) { ErasePipelineState(); throw std::runtime_error("Could not get shader group handle"); }
+
+	shaderBindingTable.UploadSubData(0, sbtData, shaderBindingTableSize);
+
+	delete[] sbtData;
+}
+
+bool HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::IsInitialized()
+{
+	return haveRTXPipeline;
+}
+
+HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::~RTXPipelineStateClass()
+{
+	ErasePipelineState();
+}
+			</xmp>
+			</div>
+		</div>
+		<div class="center-panel-third">
+			<div class="panel-heading"><h2>Before...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::ErasePipelineState()
+{
+	if (!ptrToInstance) return;
+
+	if (haveRTXPipeline) vkDestroyPipeline(ptrToInstance->device, pipeline, nullptr);
+	if (havePipelineLayout) vkDestroyPipelineLayout(ptrToInstance->device, pipelineLayout, nullptr);
+	if (havePipelineCache) vkDestroyPipelineCache(ptrToInstance->device, pipelineCache, nullptr);
+
+	havePipelineLayout = false;
+	haveRTXPipeline = false;
+	havePipelineCache = false;
+	ptrToInstance = nullptr;
+}
+
+HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass()
+{
+	havePipelineLayout = false;
+	haveRTXPipeline = false;
+	havePipelineCache = false;
+	ptrToInstance = nullptr;
+}
+
+HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass(InstanceClass & renderInst, DescriptorSetLayout & DescSetLayout, ShaderResourceSet & inpShader)
+{
+	ptrToInstance = &renderInst;
+
+	VkPipelineLayoutCreateInfo pPipelineLayoutCreateInfo = {};
+	pPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pPipelineLayoutCreateInfo.pNext = VK_NULL_HANDLE;
+	pPipelineLayoutCreateInfo.setLayoutCount = (uint32_t)DescSetLayout.descriptorSetLayouts.size();
+	pPipelineLayoutCreateInfo.pSetLayouts = DescSetLayout.descriptorSetLayouts.data();
+
+	VkResult result = vkCreatePipelineLayout(ptrToInstance->device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayout);
+	if (result != VK_SUCCESS) { ErasePipelineState(); throw std::runtime_error("Could not create pipeline layout"); }
+	havePipelineLayout = true;
+
+	try { shaderStages.push_back(AddOrFindCachedShaderStage(*ptrToInstance, inpShader.rtx_raygen_shader, inpShader.getRaygenEntry(), VK_SHADER_STAGE_RAYGEN_BIT_NV)->elem.stage); }
+	catch (...) { ErasePipelineState(); throw std::runtime_error("Could not create raygen shader"); }
+	try { shaderStages.push_back(AddOrFindCachedShaderStage(*ptrToInstance, inpShader.rtx_raymiss_shader, inpShader.getRaymissEntry(), VK_SHADER_STAGE_MISS_BIT_NV)->elem.stage); }
+	catch (...) { ErasePipelineState(); throw std::runtime_error("Could not create raymiss shader"); }
+	try { shaderStages.push_back(AddOrFindCachedShaderStage(*ptrToInstance, inpShader.rtx_raychit_shader, inpShader.getRaychitEntry(), VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV)->elem.stage); }
+	catch (...) { ErasePipelineState(); throw std::runtime_error("Could not create raychit shader"); }
+	if (inpShader.getRayahitEntry())
+	{
+		try { shaderStages.push_back(AddOrFindCachedShaderStage(*ptrToInstance, inpShader.rtx_rayahit_shader, inpShader.getRayahitEntry(), VK_SHADER_STAGE_ANY_HIT_BIT_NV)->elem.stage); }
+		catch (...) { ErasePipelineState(); throw std::runtime_error("Could not create rayahit shader"); }
+	}
+
+	shaderGroups.push_back({ VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV, nullptr, VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV, 0, VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV });
+	shaderGroups.push_back({ VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV, nullptr, VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV, 1, VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV });
+	shaderGroups.push_back({ VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV, nullptr, VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_NV, VK_SHADER_UNUSED_NV, 2, inpShader.getRayahitEntry() ? 3 : VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV });
+
+	VkRayTracingPipelineCreateInfoNV pipelineCreateInfo = {};
+	pipelineCreateInfo.stageCount = (uint32_t)shaderStages.size();
+	pipelineCreateInfo.pStages = shaderStages.data();
+	pipelineCreateInfo.groupCount = (uint32_t)shaderGroups.size();
+	pipelineCreateInfo.pGroups = shaderGroups.data();
+	pipelineCreateInfo.maxRecursionDepth = 8;
+	pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_NV;
+	pipelineCreateInfo.layout = pipelineLayout;
+
+	VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
+	pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+	result = vkCreatePipelineCache(ptrToInstance->device, &pipelineCacheCreateInfo, nullptr, &pipelineCache);
+	if (result != VK_SUCCESS) { throw std::runtime_error("Could not create a pipeline cache"); }
+	havePipelineCache = true;
+
+	result = RTXInstance::vkCreateRayTracingPipelinesNV(ptrToInstance->device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline);
+	if (result != VK_SUCCESS) { ErasePipelineState(); throw std::runtime_error("Could not create rtx pipeline"); }
+	haveRTXPipeline = true;
+
+	unsigned int sbtChunkSize = (unsigned int)ceil((double)RTXInstance::raytracingProperties.shaderGroupHandleSize / (double)RTXInstance::raytracingProperties.shaderGroupBaseAlignment) * RTXInstance::raytracingProperties.shaderGroupBaseAlignment;
+
+	uint32_t shaderBindingTableSize = RTXInstance::raytracingProperties.shaderGroupHandleSize * (uint32_t)shaderGroups.size();
+	uint32_t shaderBindingTableSizeAligned = sbtChunkSize * (uint32_t)shaderGroups.size();
+
+	new (&shaderBindingTable) BufferClass(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SRC, Instance, nullptr, shaderBindingTableSizeAligned);
+	unsigned char *sbtData = new unsigned char[shaderBindingTableSize];
+	unsigned char *sbtDataAligned = new unsigned char[shaderBindingTableSizeAligned];
+
+	result = RTXInstance::vkGetRayTracingShaderGroupHandlesNV(ptrToInstance->device, pipeline, 0, (uint32_t)shaderGroups.size(), shaderBindingTableSize, sbtData);
+	if (result != VK_SUCCESS) { ErasePipelineState(); throw std::runtime_error("Could not get shader group handle"); }
+	for (int i = 0; i != (uint32_t)shaderGroups.size(); i++)
+		memcpy(&sbtDataAligned[i * sbtChunkSize], &sbtData[i * RTXInstance::raytracingProperties.shaderGroupHandleSize], RTXInstance::raytracingProperties.shaderGroupHandleSize);
+
+	shaderBindingTable.UploadSubData(0, sbtDataAligned, shaderBindingTableSizeAligned);
+
+	delete[] sbtData;
+	delete[] sbtDataAligned;
+}
+
+bool HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::IsInitialized()
+{
+	return haveRTXPipeline;
+}
+
+HIGHOMEGA::GL::NVIDIA_RTX::RTXPipelineStateClass::~RTXPipelineStateClass()
+{
+	ErasePipelineState();
+}
+			</xmp>
+			</div>
+		</div>
+		<div class="right-panel-third">
+			<div class="panel-heading"><h2>After...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+void HIGHOMEGA::GL::KHR_RT::RTPipelineStateClass::ErasePipelineState()
+{
+	if (!ptrToInstance) return;
+
+	if (haveRTPipeline) vkDestroyPipeline(ptrToInstance->device, pipeline, nullptr);
+	if (havePipelineLayout) vkDestroyPipelineLayout(ptrToInstance->device, pipelineLayout, nullptr);
+	if (havePipelineCache) vkDestroyPipelineCache(ptrToInstance->device, pipelineCache, nullptr);
+
+	havePipelineLayout = false;
+	haveRTPipeline = false;
+	havePipelineCache = false;
+	ptrToInstance = nullptr;
+}
+
+HIGHOMEGA::GL::KHR_RT::RTPipelineStateClass::RTPipelineStateClass()
+{
+	havePipelineLayout = false;
+	haveRTPipeline = false;
+	havePipelineCache = false;
+	ptrToInstance = nullptr;
+}
+
+HIGHOMEGA::GL::KHR_RT::RTPipelineStateClass::RTPipelineStateClass(InstanceClass & renderInst, DescriptorSetLayout & DescSetLayout, ShaderResourceSet & inpShader)
+{
+	ptrToInstance = &renderInst;
+
+	VkPipelineLayoutCreateInfo pPipelineLayoutCreateInfo = {};
+	pPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pPipelineLayoutCreateInfo.pNext = VK_NULL_HANDLE;
+	pPipelineLayoutCreateInfo.setLayoutCount = (uint32_t)DescSetLayout.descriptorSetLayouts.size();
+	pPipelineLayoutCreateInfo.pSetLayouts = DescSetLayout.descriptorSetLayouts.data();
+
+	VkResult result = vkCreatePipelineLayout(ptrToInstance->device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayout);
+	if (result != VK_SUCCESS) { ErasePipelineState(); throw std::runtime_error("Could not create pipeline layout"); }
+	havePipelineLayout = true;
+
+	try { shaderStages.push_back(AddOrFindCachedShaderStage(*ptrToInstance, inpShader.rt_raygen_shader, inpShader.getRaygenEntry(), VK_SHADER_STAGE_RAYGEN_BIT_KHR)->elem.stage); }
+	catch (...) { ErasePipelineState(); throw std::runtime_error("Could not create raygen shader"); }
+	try { shaderStages.push_back(AddOrFindCachedShaderStage(*ptrToInstance, inpShader.rt_raymiss_shader, inpShader.getRaymissEntry(), VK_SHADER_STAGE_MISS_BIT_KHR)->elem.stage); }
+	catch (...) { ErasePipelineState(); throw std::runtime_error("Could not create raymiss shader"); }
+	try { shaderStages.push_back(AddOrFindCachedShaderStage(*ptrToInstance, inpShader.rt_raychit_shader, inpShader.getRaychitEntry(), VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR)->elem.stage); }
+	catch (...) { ErasePipelineState(); throw std::runtime_error("Could not create raychit shader"); }
+	if (inpShader.getRayahitEntry())
+	{
+		try { shaderStages.push_back(AddOrFindCachedShaderStage(*ptrToInstance, inpShader.rt_rayahit_shader, inpShader.getRayahitEntry(), VK_SHADER_STAGE_ANY_HIT_BIT_KHR)->elem.stage); }
+		catch (...) { ErasePipelineState(); throw std::runtime_error("Could not create rayahit shader"); }
+	}
+
+	shaderGroups.push_back({ VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR, nullptr, VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR, 0, VK_SHADER_UNUSED_KHR, VK_SHADER_UNUSED_KHR, VK_SHADER_UNUSED_KHR });
+	shaderGroups.push_back({ VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR, nullptr, VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR, 1, VK_SHADER_UNUSED_KHR, VK_SHADER_UNUSED_KHR, VK_SHADER_UNUSED_KHR });
+	shaderGroups.push_back({ VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR, nullptr, VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR, VK_SHADER_UNUSED_KHR, 2, inpShader.getRayahitEntry() ? 3 : VK_SHADER_UNUSED_KHR, VK_SHADER_UNUSED_KHR });
+
+	VkRayTracingPipelineCreateInfoKHR pipelineCreateInfo = {};
+	pipelineCreateInfo.stageCount = (uint32_t)shaderStages.size();
+	pipelineCreateInfo.pStages = shaderStages.data();
+	pipelineCreateInfo.groupCount = (uint32_t)shaderGroups.size();
+	pipelineCreateInfo.pGroups = shaderGroups.data();
+	pipelineCreateInfo.maxPipelineRayRecursionDepth = 8;
+	pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
+	pipelineCreateInfo.layout = pipelineLayout;
+
+	VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
+	pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+	result = vkCreatePipelineCache(ptrToInstance->device, &pipelineCacheCreateInfo, nullptr, &pipelineCache);
+	if (result != VK_SUCCESS) { throw std::runtime_error("Could not create a pipeline cache"); }
+	havePipelineCache = true;
+
+	result = RTInstance::fpCreateRayTracingPipelinesKHR(ptrToInstance->device, VK_NULL_HANDLE, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline);
+	if (result != VK_SUCCESS) { ErasePipelineState(); throw std::runtime_error("Could not create rt pipeline"); }
+	haveRTPipeline = true;
+
+	unsigned int sbtChunkSize = (RTInstance::raytracingPipelineProperties.shaderGroupHandleSize + (RTInstance::raytracingPipelineProperties.shaderGroupBaseAlignment - 1)) & (~(RTInstance::raytracingPipelineProperties.shaderGroupBaseAlignment - 1));
+
+	uint32_t shaderBindingTableSize = RTInstance::raytracingPipelineProperties.shaderGroupHandleSize * (uint32_t)shaderGroups.size();
+	uint32_t shaderBindingTableSizeAligned = sbtChunkSize * (uint32_t)shaderGroups.size();
+
+	new (&shaderBindingTable) BufferClass(MEMORY_HOST_VISIBLE | MEMORY_HOST_COHERENT, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SRC | USAGE_SBT | USAGE_DEVICE_ADDRESS, Instance, nullptr, shaderBindingTableSizeAligned);
+	unsigned char *sbtData = new unsigned char[shaderBindingTableSize];
+	unsigned char *sbtDataAligned = new unsigned char[shaderBindingTableSizeAligned];
+
+	result = RTInstance::fpGetRayTracingShaderGroupHandlesKHR(ptrToInstance->device, pipeline, 0, (uint32_t)shaderGroups.size(), shaderBindingTableSize, sbtData);
+	if (result != VK_SUCCESS) { ErasePipelineState(); throw std::runtime_error("Could not get shader group handle"); }
+	for (int i = 0; i != (uint32_t)shaderGroups.size(); i++)
+		memcpy(&sbtDataAligned[i * sbtChunkSize], &sbtData[i * RTInstance::raytracingPipelineProperties.shaderGroupHandleSize], RTInstance::raytracingPipelineProperties.shaderGroupHandleSize);
+
+	shaderBindingTable.UploadSubData(0, sbtDataAligned, shaderBindingTableSizeAligned);
+
+	delete[] sbtData;
+	delete[] sbtDataAligned;
+}
+
+bool HIGHOMEGA::GL::KHR_RT::RTPipelineStateClass::IsInitialized()
+{
+	return haveRTPipeline;
+}
+
+HIGHOMEGA::GL::KHR_RT::RTPipelineStateClass::~RTPipelineStateClass()
+{
+	ErasePipelineState();
+}
+			</xmp>
+			</div>
+		</div>
+	</div>
+	<p/>
+	<h1>The Tracelet (Trace-pass Abstraction)</h1>
+	This is really a helper utility for setting up and submitting ray tracing passes. The only difference is really how traceRays is called.<p/>
+	<div class="panel-holder">
+		<div class="left-panel">
+			<div class="panel-heading"><h2>Before...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+HIGHOMEGA::GL::NVIDIA_RTX::RTXTracelet::RTXTracelet()
+{
+	ptrToInstance = nullptr;
+}
+
+HIGHOMEGA::GL::NVIDIA_RTX::RTXTracelet::RTXTracelet(InstanceClass & inpInstance)
+{
+	ptrToInstance = &inpInstance;
+
+	new (&traceSem) SemaphoreClass(ptrToInstance);
+}
+
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXTracelet::Submit(unsigned int inpWidth, unsigned int inpHeight, unsigned int inpDepth, std::vector<ShaderResource> & inpTracingResources, bool updateResources, ShaderResourceSet & inpRTXShaderResourceSet)
+{
+	if (!ptrToInstance) return;
+
+	if (updateResources) recordedCmdBuf = false;
+
+	if (!recordedCmdBuf)
+	{
+		if (!recordedPSO)
+		{
+			DSL.CreateDescriptorSetLayout(inpTracingResources, ptrToInstance);
+			new (&PSO) RTXPipelineStateClass(*ptrToInstance, DSL, inpRTXShaderResourceSet);
+			new (&DS) DescriptorSets(&DSL);
+			DS.WriteDescriptorSets(inpTracingResources);
+			recordedPSO = true;
+		}
+		else if (updateResources)
+		{
+			DS.RewriteDescriptorSets(inpTracingResources);
+		}
+
+		BeginCommandBuffer(*ptrToInstance);
+
+		vkCmdBindPipeline(cmdBuffers[0], VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, PSO.pipeline);
+		vkCmdBindDescriptorSets(cmdBuffers[0], VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, PSO.pipelineLayout, 0, (uint32_t)DS.descriptorSets.size(), DS.descriptorSets.data(), 0, 0);
+
+		unsigned int sbtChunkSize = (unsigned int)ceil((double)RTXInstance::raytracingProperties.shaderGroupHandleSize / (double)RTXInstance::raytracingProperties.shaderGroupBaseAlignment) * RTXInstance::raytracingProperties.shaderGroupBaseAlignment;
+
+		RTXInstance::vkCmdTraceRaysNV(cmdBuffers[0],
+			PSO.shaderBindingTable.buffer, 0,
+			PSO.shaderBindingTable.buffer, 1 * sbtChunkSize, sbtChunkSize,
+			PSO.shaderBindingTable.buffer, 2 * sbtChunkSize, sbtChunkSize,
+			VK_NULL_HANDLE, 0, 0,
+			inpWidth, inpHeight, inpDepth);
+
+		EndCommandBuffer();
+
+		recordedCmdBuf = true;
+	}
+
+	WaitSubmitSignalCommandBuffer(submissionMode, traceSem);
+}
+
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXTracelet::makeAsync()
+{
+	submissionMode = SUBMIT_ASYNC;
+}
+
+void HIGHOMEGA::GL::NVIDIA_RTX::RTXTracelet::makeSerial()
+{
+	submissionMode = SUBMIT_SERIAL;
+}
+			</xmp>
+			</div>
+		</div>
+		<div class="right-panel">
+			<div class="panel-heading"><h2>After...</h2></div>
+			<div class="panel-content">
+			<xmp style="overflow: scroll;">
+
+HIGHOMEGA::GL::KHR_RT::RTTracelet::RTTracelet()
+{
+	ptrToInstance = nullptr;
+}
+
+HIGHOMEGA::GL::KHR_RT::RTTracelet::RTTracelet(InstanceClass & inpInstance)
+{
+	ptrToInstance = &inpInstance;
+
+	new (&traceSem) SemaphoreClass(ptrToInstance);
+}
+
+void HIGHOMEGA::GL::KHR_RT::RTTracelet::Submit(unsigned int inpWidth, unsigned int inpHeight, unsigned int inpDepth, std::vector<ShaderResource> & inpTracingResources, bool updateResources, ShaderResourceSet & inpRTShaderResourceSet)
+{
+	if (!ptrToInstance) return;
+
+	if (updateResources) recordedCmdBuf = false;
+
+	if (!recordedCmdBuf)
+	{
+		if (!recordedPSO)
+		{
+			DSL.CreateDescriptorSetLayout(inpTracingResources, ptrToInstance);
+			new (&PSO) RTPipelineStateClass(*ptrToInstance, DSL, inpRTShaderResourceSet);
+			new (&DS) DescriptorSets(&DSL);
+			DS.WriteDescriptorSets(inpTracingResources);
+			recordedPSO = true;
+		}
+		else if (updateResources)
+		{
+			DS.RewriteDescriptorSets(inpTracingResources);
+		}
+
+		BeginCommandBuffer(*ptrToInstance);
+
+		vkCmdBindPipeline(cmdBuffers[0], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, PSO.pipeline);
+		vkCmdBindDescriptorSets(cmdBuffers[0], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, PSO.pipelineLayout, 0, (uint32_t)DS.descriptorSets.size(), DS.descriptorSets.data(), 0, 0);
+
+		unsigned int sbtChunkSize = (RTInstance::raytracingPipelineProperties.shaderGroupHandleSize + (RTInstance::raytracingPipelineProperties.shaderGroupBaseAlignment - 1)) & (~(RTInstance::raytracingPipelineProperties.shaderGroupBaseAlignment - 1));
+
+		VkBufferDeviceAddressInfo bufDevAdInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
+		bufDevAdInfo.buffer = PSO.shaderBindingTable.buffer;
+		VkDeviceAddress sbtDeviceAddress = RTInstance::fpGetBufferDeviceAddressKHR(Instance.device, &bufDevAdInfo);
+
+		std::array<VkStridedDeviceAddressRegionKHR, 4> strideAddresses{
+			VkStridedDeviceAddressRegionKHR{sbtDeviceAddress + 0u * sbtChunkSize, sbtChunkSize, sbtChunkSize},
+			VkStridedDeviceAddressRegionKHR{sbtDeviceAddress + 1u * sbtChunkSize, sbtChunkSize, sbtChunkSize},
+			VkStridedDeviceAddressRegionKHR{sbtDeviceAddress + 2u * sbtChunkSize, sbtChunkSize, sbtChunkSize},
+			VkStridedDeviceAddressRegionKHR{0u,0u,0u} };
+
+		RTInstance::fpCmdTraceRaysKHR(cmdBuffers[0], &strideAddresses[0], &strideAddresses[1], &strideAddresses[2], &strideAddresses[3], inpWidth, inpHeight, inpDepth);
+
+		EndCommandBuffer();
+
+		recordedCmdBuf = true;
+	}
+
+	WaitSubmitSignalCommandBuffer(submissionMode, traceSem);
+}
+
+void HIGHOMEGA::GL::KHR_RT::RTTracelet::makeAsync()
+{
+	submissionMode = SUBMIT_ASYNC;
+}
+
+void HIGHOMEGA::GL::KHR_RT::RTTracelet::makeSerial()
+{
+	submissionMode = SUBMIT_SERIAL;
+}
+			</xmp>
+			</div>
+		</div>
+	</div>
+	<p/>
+	<h1>And finally... the shader differences!</h1>
+	The easiest part of this guide.
+	<ul>
+		<li>Replace <code>#extension GL_NV_ray_tracing : require</code> with <code>#extension GL_EXT_ray_tracing : require</code></li>
+		<li><code>traceNV</code> is now <code>traceRayEXT</code>. Uses exact same parameters.
+		<li><code>ignoreIntersectionNV();</code> is now <code>ignoreIntersectionEXT;</code>. Same deal for <code>terminateRay</code>.</li>
+		<li>Anything else ending in <code>NV</code> should be now ending with <code>EXT</code>.</li>
+	</ul>
+	<h1>Acknowledgements</h1>
+	Big thanks goes out to:
+	<ul>
+		<li><a href="https://twitter.com/saschawillems2">Sascha Willems</a>. <a href="https://github.com/SaschaWillems/Vulkan">His resource</a> is the best resource there is to learn Vulkan.</li>
+		<li><a href="https://twitter.com/henrikrydgard">Henrik Rydgard</a>.</li>
+		<li><a href="https://twitter.com/axelgneiting">Axel Gneiting</a>. Go play some DOOM.</li>
+	</ul>
+	<h1>Feedback</h1>
+	I will post this on reddit and post a link back here. Feedback is very welcome.<p/>
+	Hit me up on <a target="_blank" href="https://twitter.com/TooMuchVoltage/">Twitter</a> ;)
+
+</body>
+</html>
