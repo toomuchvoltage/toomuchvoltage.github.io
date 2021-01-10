@@ -1,16 +1,10 @@
-@font-face {
-	font-family: "Gothic";
-	src: url("../fonts/gothic.woff") format("woff"),
-		 url("../fonts/gothic.ttf") format("truetype");
-}
-
 .link a:link, a:visited {
 	color: #87ceeb;
 	text-decoration: none;
 }
 
 body {
-	font-family: "Gothic";
+	font-family: "Arial";
 	color: #DEDEDE;
 	background-color: #1F1F1F;
 	margin-left: 2%;
