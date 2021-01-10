@@ -4,12 +4,7 @@
 		 url("../fonts/gothic.ttf") format("truetype");
 }
 
-a:link {
-	color: #87ceeb;
-	text-decoration: none;
-}
-
-a:visited {
+.link a:link, a:visited {
 	color: #87ceeb;
 	text-decoration: none;
 }

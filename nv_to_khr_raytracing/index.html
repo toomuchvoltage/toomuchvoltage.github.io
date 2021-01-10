@@ -13,7 +13,7 @@
 	{
 		if (window.displayMode == undefined || window.displayMode == "dark")
 		{
-			document.body.style.backgroundColor = "white";
+			document.body.style.backgroundColor = "lightgrey";
 			document.body.style.color = "black";
 			let allHolders = document.getElementsByClassName("panel-holder");
 			for (let i = 0; i != allHolders.length; i++) {
@@ -22,6 +22,10 @@
 			let allHeadings = document.getElementsByClassName("panel-heading");
 			for (let i = 0; i != allHeadings.length; i++) {
 				allHeadings[i].style.backgroundColor = "#DDDDDD";
+			}
+			let allLinks = document.getElementsByClassName("link");
+			for (let i = 0; i != allLinks.length; i++) {
+				allLinks[i].style.color = "#222222";
 			}
 			window.displayMode = "light";
 		}
@@ -36,6 +40,10 @@
 			let allHeadings = document.getElementsByClassName("panel-heading");
 			for (let i = 0; i != allHeadings.length; i++) {
 				allHeadings[i].style.backgroundColor = "grey";
+			}
+			let allLinks = document.getElementsByClassName("link");
+			for (let i = 0; i != allLinks.length; i++) {
+				allLinks[i].style.color = "#87ceeb";
 			}
 			window.displayMode = "dark";
 		}
@@ -65,7 +73,7 @@
 	Make sure to request things you need and not the things you don't. For instance RTX 2080Ti does *not* support host commands, so don't ask for it.
 	We need <code>vkPhysicalDeviceRayTracingPipelineFeatures</code> because we're using ray tracing pipelines and not ray-queries.
 	We also need <code>vkPhysicalDeviceBufferAddressFeatures</code> because fundamentally KHR_raytracing needs buffer device addresses all over the place. For almost everything.
-	<code>deviceDescriptorIndexingFeature</code> (pretty much bindless...) is a staple of any ray-tracing. I even use it when I'm doing my real-time Compact binary LBVH ray tracing stuff (see <a target="_blank" href="https://twitter.com/TooMuchVoltage/status/1330134177002500098">Twitter</a> ;).
+	<code>deviceDescriptorIndexingFeature</code> (pretty much bindless...) is a staple of any ray-tracing. I even use it when I'm doing my real-time Compact binary LBVH ray tracing stuff (see <a class="link" target="_blank" href="https://twitter.com/TooMuchVoltage/status/1330134177002500098">Twitter</a> ;).
 	<p/>
 	<div class="panel-holder">
 		<div class="left-panel">
@@ -2082,13 +2090,13 @@ for %%A in (*.rahit) do glslangvalidator --target-env spirv1.4 -V %%A -o %%A.spv
 	<h1>Acknowledgements</h1>
 	Big thanks goes out to:
 	<ul>
-		<li><a target="_blank" href="https://twitter.com/saschawillems2">Sascha Willems</a>. <a target="_blank" href="https://github.com/SaschaWillems/Vulkan">His resource</a> is the best resource there is to learn Vulkan.</li>
-		<li><a target="_blank" href="https://twitter.com/henrikrydgard">Henrik Rydgard</a>.</li>
-		<li><a target="_blank" href="https://twitter.com/axelgneiting">Axel Gneiting</a>. Go play some DOOM.</li>
+		<li><a class="link" target="_blank" href="https://twitter.com/saschawillems2">Sascha Willems</a>. <a class="link" target="_blank" href="https://github.com/SaschaWillems/Vulkan">His resource</a> is the best resource there is to learn Vulkan.</li>
+		<li><a class="link" target="_blank" href="https://twitter.com/henrikrydgard">Henrik Rydgard</a>.</li>
+		<li><a class="link" target="_blank" href="https://twitter.com/axelgneiting">Axel Gneiting</a>. Go play some DOOM.</li>
 	</ul>
 	<h1>Feedback</h1>
-	I will post this on reddit and post a link back here (<b>UPDATE:</b> <a target="_blank" href="https://www.reddit.com/r/vulkan/comments/kubbnb/transition_guide_from_vk_nv_raytracing_to_final/">here it is!</a>). Feedback is very welcome.<p/>
-	Hit me up on <a target="_blank" href="https://twitter.com/TooMuchVoltage/">Twitter</a> ;)
+	I will post this on reddit and post a link back here (<b>UPDATE:</b> <a class="link" target="_blank" href="https://www.reddit.com/r/vulkan/comments/kubbnb/transition_guide_from_vk_nv_raytracing_to_final/">here it is!</a>). Feedback is very welcome.<p/>
+	Hit me up on <a class="link" target="_blank" href="https://twitter.com/TooMuchVoltage/">Twitter</a> ;)
 
 </body>
 </html>
