@@ -974,11 +974,6 @@ void KHR_RT::RTAccelStruct::UpdateAccelStruct(bool isBlas, VkAccelerationStructu
 
 		BeginCommandBuffer(*ptrToInstance);
 
-		VkMemoryBarrier barrier{ VK_STRUCTURE_TYPE_MEMORY_BARRIER };
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
-		vkCmdPipelineBarrier(cmdBuffers[0], VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &barrier, 0, nullptr, 0, nullptr);
-
 		VkAccelerationStructureGeometryInstancesDataKHR instancesVk{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR };
 		instancesVk.arrayOfPointers = VK_FALSE;
 		instancesVk.data.deviceAddress = instanceAddress;
