@@ -742,8 +742,7 @@ void NVIDIA_RTX::RTXAccelStruct::SubmitCreateAccelStruct(bool isBlas, VkGeometry
 	VkDeviceSize scratchBufferSize = GetScratchBufferSize(accelStruct, updateAction);
 	if (scratchBufferSize > scratchBuffer.getSize())
 	{
-		if (scratchBuffer.getSize() > 0) scratchBuffer.~BufferClass();
-		new (&scratchBuffer) BufferClass(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_RTX, *ptrToInstance, nullptr, (unsigned int)scratchBufferSize);
+		scratchBuffer.Buffer(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_RTX, *ptrToInstance, nullptr, (unsigned int)scratchBufferSize);
 	}
 	unsigned int curInstanceBufferSize = 0;
 	if (!isBlas)
@@ -763,9 +762,7 @@ void NVIDIA_RTX::RTXAccelStruct::SubmitCreateAccelStruct(bool isBlas, VkGeometry
 	{
 		if (instanceBuffer.getSize() < curInstanceBufferSize)
 		{
-			if (instanceBuffer.getSize() > 0)
-				instanceBuffer.~BufferClass();
-			new (&instanceBuffer) BufferClass(MEMORY_HOST_VISIBLE | MEMORY_HOST_COHERENT, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_RTX, *ptrToInstance, nullptr, curInstanceBufferSize);
+			instanceBuffer.Buffer(MEMORY_HOST_VISIBLE | MEMORY_HOST_COHERENT, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_RTX, *ptrToInstance, nullptr, curInstanceBufferSize);
 		}
 		instanceBuffer.UploadSubData(0, instanceData->data(), (unsigned int)instanceData->size() * sizeof(VkGeometryInstance));
 		asInfo.instanceCount = (uint32_t)instanceData->size();
@@ -831,7 +828,7 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 		createInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
 		createInfo.size = sizeInfo.accelerationStructureSize;
 
-		new (&accelStructBuffer) BufferClass(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, nullptr, (unsigned int)createInfo.size);
+		accelStructBuffer.Buffer(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, nullptr, (unsigned int)createInfo.size);
 		createInfo.buffer = accelStructBuffer.buffer;
 
 		VkResult result = RTInstance::fpCreateAccelerationStructureKHR(Instance.device, &createInfo, nullptr, &accelStruct);
@@ -864,9 +861,7 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 		
 		if (instanceBuffer.getSize() < curInstanceBufSize)
 		{
-			if (instanceBuffer.getSize() > 0)
-				instanceBuffer.~BufferClass();
-			new (&instanceBuffer) BufferClass(MEMORY_HOST_VISIBLE | MEMORY_HOST_COHERENT, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT | USAGE_SSBO, *ptrToInstance, instanceData->data(), curInstanceBufSize);
+			instanceBuffer.Buffer(MEMORY_HOST_VISIBLE | MEMORY_HOST_COHERENT, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT | USAGE_SSBO, *ptrToInstance, instanceData->data(), curInstanceBufSize);
 		}
 
 		VkBufferDeviceAddressInfo bufferInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
@@ -898,7 +893,7 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 		createInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
 		createInfo.size = sizeInfo.accelerationStructureSize;
 
-		new (&accelStructBuffer) BufferClass(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, nullptr, (unsigned int)createInfo.size);
+		accelStructBuffer.Buffer(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, nullptr, (unsigned int)createInfo.size);
 		createInfo.buffer = accelStructBuffer.buffer;
 
 		VkResult result = RTInstance::fpCreateAccelerationStructureKHR(Instance.device, &createInfo, nullptr, &accelStruct);
@@ -963,9 +958,7 @@ void KHR_RT::RTAccelStruct::UpdateAccelStruct(bool isBlas, VkAccelerationStructu
 
 		if (instanceBuffer.getSize() < curInstanceBufSize)
 		{
-			if (instanceBuffer.getSize() > 0)
-				instanceBuffer.~BufferClass();
-			new (&instanceBuffer) BufferClass(MEMORY_HOST_VISIBLE | MEMORY_HOST_COHERENT, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, instanceData->data(), curInstanceBufSize);
+			instanceBuffer.Buffer(MEMORY_HOST_VISIBLE | MEMORY_HOST_COHERENT, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, instanceData->data(), curInstanceBufSize);
 		}
 
 		VkBufferDeviceAddressInfo bufferInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
@@ -1307,8 +1300,7 @@ void NVIDIA_RTX::RTXScene::CreateInstanceData(std::vector <VkGeometryInstance> &
 	allInstanceData.reserve(bufferInstanceCount);
 	if (instancePropertiesBuffer.getSize() / sizeof(InstanceProperties) < bufferInstanceCount)
 	{
-		if (instancePropertiesBuffer.getSize() > 0) { instancePropertiesBuffer.~BufferClass(); }
-		new (&instancePropertiesBuffer) BufferClass(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SSBO, *ptrToInstance, nullptr, bufferInstanceCount * sizeof(InstanceProperties));
+		instancePropertiesBuffer.Buffer(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SSBO, *ptrToInstance, nullptr, bufferInstanceCount * sizeof(InstanceProperties));
 	}
 
 	unsigned int instanceIdCount = 0;
@@ -1483,8 +1475,7 @@ void KHR_RT::RTScene::CreateInstanceData(std::vector <VkAccelerationStructureIns
 	allInstanceData.reserve(bufferInstanceCount);
 	if (instancePropertiesBuffer.getSize() / sizeof(InstanceProperties) < bufferInstanceCount)
 	{
-		if (instancePropertiesBuffer.getSize() > 0) { instancePropertiesBuffer.~BufferClass(); }
-		new (&instancePropertiesBuffer) BufferClass(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SSBO, *ptrToInstance, nullptr, bufferInstanceCount * sizeof(InstanceProperties));
+		instancePropertiesBuffer.Buffer(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SSBO, *ptrToInstance, nullptr, bufferInstanceCount * sizeof(InstanceProperties));
 	}
 
 	unsigned int instanceIdCount = 0;
@@ -1636,7 +1627,7 @@ NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass(InstanceClass & renderI
 
 	uint32_t shaderBindingTableSize = RTXInstance::raytracingProperties.shaderGroupHandleSize * (uint32_t)shaderGroups.size();
 
-	new (&shaderBindingTable) BufferClass(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SRC, Instance, nullptr, shaderBindingTableSize);
+	shaderBindingTable.Buffer(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SRC, Instance, nullptr, shaderBindingTableSize);
 	unsigned char *sbtData = new unsigned char[shaderBindingTableSize];
 
 	result = RTXInstance::vkGetRayTracingShaderGroupHandlesNV(ptrToInstance->device, pipeline, 0, (uint32_t)shaderGroups.size(), shaderBindingTableSize, sbtData);
@@ -1739,7 +1730,7 @@ NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass(InstanceClass & renderI
 	uint32_t shaderBindingTableSize = RTXInstance::raytracingProperties.shaderGroupHandleSize * (uint32_t)shaderGroups.size();
 	uint32_t shaderBindingTableSizeAligned = sbtChunkSize * (uint32_t)shaderGroups.size();
 
-	new (&shaderBindingTable) BufferClass(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SRC, Instance, nullptr, shaderBindingTableSizeAligned);
+	shaderBindingTable.Buffer(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SRC, Instance, nullptr, shaderBindingTableSizeAligned);
 	unsigned char *sbtData = new unsigned char[shaderBindingTableSize];
 	unsigned char *sbtDataAligned = new unsigned char[shaderBindingTableSizeAligned];
 
@@ -1846,7 +1837,7 @@ KHR_RT::RTPipelineStateClass::RTPipelineStateClass(InstanceClass & renderInst, D
 	uint32_t shaderBindingTableSize = RTInstance::raytracingPipelineProperties.shaderGroupHandleSize * (uint32_t)shaderGroups.size();
 	uint32_t shaderBindingTableSizeAligned = sbtChunkSize * (uint32_t)shaderGroups.size();
 
-	new (&shaderBindingTable) BufferClass(MEMORY_HOST_VISIBLE | MEMORY_HOST_COHERENT, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SRC | USAGE_SBT | USAGE_DEVICE_ADDRESS, Instance, nullptr, shaderBindingTableSizeAligned);
+	shaderBindingTable.Buffer(MEMORY_HOST_VISIBLE | MEMORY_HOST_COHERENT, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SRC | USAGE_SBT | USAGE_DEVICE_ADDRESS, Instance, nullptr, shaderBindingTableSizeAligned);
 	unsigned char *sbtData = new unsigned char[shaderBindingTableSize];
 	unsigned char *sbtDataAligned = new unsigned char[shaderBindingTableSizeAligned];
 
@@ -1891,7 +1882,7 @@ NVIDIA_RTX::RTXTracelet::RTXTracelet(InstanceClass & inpInstance)
 {
 	ptrToInstance = &inpInstance;
 
-	new (&traceSem) SemaphoreClass(ptrToInstance);
+	traceSem.Semaphore(ptrToInstance);
 }
 
 void NVIDIA_RTX::RTXTracelet::Submit(unsigned int inpWidth, unsigned int inpHeight, unsigned int inpDepth, std::vector<ShaderResource> & inpTracingResources, bool updateResources, ShaderResourceSet & inpRTXShaderResourceSet)
@@ -1905,8 +1896,8 @@ void NVIDIA_RTX::RTXTracelet::Submit(unsigned int inpWidth, unsigned int inpHeig
 		if (!recordedPSO)
 		{
 			DSL.CreateDescriptorSetLayout(inpTracingResources, ptrToInstance);
-			new (&PSO) RTXPipelineStateClass(*ptrToInstance, DSL, inpRTXShaderResourceSet);
-			new (&DS) DescriptorSets(&DSL);
+			PSO.RTXPipelineState(*ptrToInstance, DSL, inpRTXShaderResourceSet);
+			DS.Make(&DSL);
 			DS.WriteDescriptorSets(inpTracingResources);
 			recordedPSO = true;
 		}
@@ -1963,7 +1954,7 @@ KHR_RT::RTTracelet::RTTracelet(InstanceClass & inpInstance)
 {
 	ptrToInstance = &inpInstance;
 
-	new (&traceSem) SemaphoreClass(ptrToInstance);
+	traceSem.Semaphore(ptrToInstance);
 }
 
 void KHR_RT::RTTracelet::Submit(unsigned int inpWidth, unsigned int inpHeight, unsigned int inpDepth, std::vector<ShaderResource> & inpTracingResources, bool updateResources, ShaderResourceSet & inpRTShaderResourceSet)
@@ -1977,8 +1968,8 @@ void KHR_RT::RTTracelet::Submit(unsigned int inpWidth, unsigned int inpHeight, u
 		if (!recordedPSO)
 		{
 			DSL.CreateDescriptorSetLayout(inpTracingResources, ptrToInstance);
-			new (&PSO) RTPipelineStateClass(*ptrToInstance, DSL, inpRTShaderResourceSet);
-			new (&DS) DescriptorSets(&DSL);
+			PSO.RTPipelineState(*ptrToInstance, DSL, inpRTShaderResourceSet);
+			DS.Make(&DSL);
 			DS.WriteDescriptorSets(inpTracingResources);
 			recordedPSO = true;
 		}
