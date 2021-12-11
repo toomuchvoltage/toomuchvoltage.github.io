@@ -1190,8 +1190,8 @@ void KHR_RT::RTGeometry::SetDirty()
 	In that same breath, <code>allInstanceData</code> is populated and used as an instance property buffer (i.e. property fetching during ray hits for example) and isn't for getting the API to function.<p/>
 	You won't necessarily see what will happen to <code>material</code> here. It will be used later to build a variable count descriptor set for materials.<p/>
 	Here's something that might catch your attention. In both <code>Add(...)</code> and <code>Update(...)</code> I'm setting the instance transform to identity.
-	Why you might ask? All instances in my application is backed by memory... for... reasons. Chances are you're bound by this for skinned crowds as well.<p/>
-	You may not be doing this. Modifying this code to supply an affine transformation matrix is trivial.<p/>
+	Why you might ask? All instances in my application are backed by memory... for... reasons. Chances are you're bound by this for skinned crowds as well.<p/>
+	If you're not doing this, modifying this code to supply an affine transformation matrix is trivial.<p/>
 	In terms of Vulkan related material, most of what you should focus on is how <code>curInst</code> is set. Especially the fact that a buffer device address is fed in rather than an acceleration structure handle.
 	The call to <code>GetAccelerationStructureHandle</code> is more or less defensive programming... just making sure the acceleration structure handle is fetched in case it wasn't created.
 	<div class="panel-holder">
