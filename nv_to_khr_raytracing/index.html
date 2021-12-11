@@ -55,7 +55,7 @@
 <body>
 	<h1>Transition guide from VK_NV_raytracing to (final) VK_KHR_raytracing!</h1>
 	<button style="float: right;" onclick="switchLightDarkMode()">Light/dark mode</button>
-	<h2>By: Baktash Abdollah-shamshir-saz<br/>Creation: 01/09/2021<br/>Update: 12/10/2021</h2>
+	<h2>By: Baktash Abdollah-shamshir-saz<br/>Creation: 01/09/2021<br/>Update: 12/11/2021</h2>
 	&nbsp;<p/>
 	So I spent a couple of days earlier in the year transitioning from VK_NV_raytracing to VK_KHR_raytracing.
 	I had not transitioned any code before that knowing that things were subject to change. In due time that changed and here we are.
@@ -74,7 +74,7 @@
 	Make sure to request things you need and not the things you don't. For instance RTX 2080Ti does *not* support host commands, so don't ask for it.
 	We need <code>vkPhysicalDeviceRayTracingPipelineFeatures</code> because we're using ray tracing pipelines and not ray-queries.
 	We also need <code>vkPhysicalDeviceBufferAddressFeatures</code> because fundamentally KHR_raytracing needs buffer device addresses all over the place. For almost everything.
-	<code>deviceDescriptorIndexingFeature</code> (pretty much bindless...) is a staple of any ray-tracing. I even use it when I'm doing my real-time Compact binary LBVH ray tracing stuff (see <a class="link" target="_blank" href="https://twitter.com/TooMuchVoltage/status/1330134177002500098">Twitter</a> ;).
+	<code>deviceDescriptorIndexingFeature</code> (pretty much bindless...) is a staple of any ray-tracing.
 	<p/>
 	<div class="panel-holder">
 		<div class="left-panel">
@@ -1190,9 +1190,8 @@ void KHR_RT::RTGeometry::SetDirty()
 	In that same breath, <code>allInstanceData</code> is populated and used as an instance property buffer (i.e. property fetching during ray hits for example) and isn't for getting the API to function.<p/>
 	You won't necessarily see what will happen to <code>material</code> here. It will be used later to build a variable count descriptor set for materials.<p/>
 	Here's something that might catch your attention. In both <code>Add(...)</code> and <code>Update(...)</code> I'm setting the instance transform to identity.
-	Why you might ask? At some point I decided to back ALL geometry with dedicated (though sub-allocated) buffers. Almost everything is transformed in compute (skinned meshes, rigid bodies, brushes, particles etc.). I don't even think I call <code>Update(...)</code> anywhere anymore.
-	It reduces rework in vertex shaders, especially when rendering the same geometry in different passes; I still do a shadow map for stained glass. Plus that shadow map is needed for sun/moon visiblity with the Compact LBVH pipeline.<p/>
-	You may not -- and probably are not -- doing this. Modifying this code to supply an affine transformation matrix is trivial.<p/>
+	Why you might ask? All instances in my application is backed by memory... for... reasons. Chances are you're bound by this for skinned crowds as well.<p/>
+	You may not be doing this. Modifying this code to supply an affine transformation matrix is trivial.<p/>
 	In terms of Vulkan related material, most of what you should focus on is how <code>curInst</code> is set. Especially the fact that a buffer device address is fed in rather than an acceleration structure handle.
 	The call to <code>GetAccelerationStructureHandle</code> is more or less defensive programming... just making sure the acceleration structure handle is fetched in case it wasn't created.
 	<div class="panel-holder">
@@ -2061,11 +2060,11 @@ for %%A in (*.rahit) do glslangvalidator --target-env spirv1.4 -V %%A -o %%A.spv
 	<ul>
 		<li><a class="link" target="_blank" href="https://twitter.com/saschawillems2">Sascha Willems</a>. <a class="link" target="_blank" href="https://github.com/SaschaWillems/Vulkan">His resource</a> is the best resource there is to learn Vulkan.</li>
 		<li><a class="link" target="_blank" href="https://twitter.com/henrikrydgard">Henrik Rydgard</a>.</li>
-		<li><a class="link" target="_blank" href="https://twitter.com/axelgneiting">Axel Gneiting</a>. Go play some DOOM.</li>
+		<li><a class="link" target="_blank" href="https://twitter.com/axelgneiting">Axel Gneiting</a>.</li>
 	</ul>
 	<h1>Feedback</h1>
 	Feedback is very welcome. Please leave it below via utterances:<p/>
-	Hit me up on <a class="link" target="_blank" href="https://twitter.com/TooMuchVoltage/">Twitter</a> ;)
+	Keep in touch: <a class="link" target="_blank" href="https://twitter.com/TooMuchVoltage/">Twitter</a>
 	
 	<script src="https://utteranc.es/client.js"
         repo="toomuchvoltage/toomuchvoltage.github.io"
