@@ -359,8 +359,8 @@ bool KHR_RT::RTInstance::Enabled()
 		</div>
 	</div>
 	<h1>Memory management</h1>
-	Make sure your memory manager allocates the RT chunks -- chunks where RT related buffers land -- with the <code>VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT</code> flag.
-	In my case this is manual as I like to roll my own usually :). If you're using VMA, figure out how to tell it to do it or something. If it's not doing it.<p/>
+	Make sure your memory manager allocates the RT device memory objects -- that being <code>addedChunkRef.mem</code> here -- with the <code>VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT</code> flag.
+	In my case this is manual as I like to roll my own usually :). If you're using VMA, <a class="link" target="_blank" href="https://gpuopen-librariesandsdks.github.io/VulkanMemoryAllocator/html/enabling_buffer_device_address.html">this page</a> might be of help.<p/>
 	<div class="panel-holder">
 		<div class="left-panel">
 			<div class="panel-heading"><h2>Before...</h2></div>
@@ -415,10 +415,10 @@ if (result != VK_SUCCESS) throw std::runtime_error("Could not allocate memory ch
 		</div>
 	</div>
 	<h1>Buffer Creation</h1>
-	My rendering abstractions basically create buffers right with a non-default constructor.
-	If you call <code>BufferClassWithStaging(...)</code> on a <code>BufferClass</code> instance, it'll basically create a GPU-side-only buffer using a temporary staging buffer.
+	My rendering abstractions (re-)create buffers with a call to <code>Buffer(...)</code>.
+	If you call <code>BufferClassWithStaging(...)</code> on a <code>BufferClass</code> instance, it will create a GPU-side-only buffer using a temporary staging buffer.
 	It will no longer have any host-side visibility.
-	We have new buffer usage modes and <code>USAGE_DEVICE_ADDRESS</code> will decide whether or not we'll ask our memory manager to land our buffer on chunks dedicated to ray-tracing.
+	We have new buffer usage modes and <code>USAGE_DEVICE_ADDRESS</code> will decide whether or not we'll ask the memory manager to make our buffer on memory objects dedicated to ray-tracing.
 	<code>BufferClassWithStaging(...)</code> is not used here and is only provided for reference. It doesn't change due to this transition.
 	<p/>
 	<div class="panel-holder">
@@ -439,8 +439,10 @@ enum MEMORY_USAGE
 
 ...
 
-BufferClass::BufferClass(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void *inpData, unsigned int inpDataSize)
+void BufferClass::Buffer(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void *inpData, unsigned int inpDataSize)
 {
+	if (totalDataSize > 0) RemovePast();
+
 	instanceRef = &inpInstance;
 	VkMemoryRequirements memReqs;
 
@@ -542,8 +544,10 @@ enum MEMORY_USAGE
 
 ...
 
-BufferClass::BufferClass(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void *inpData, unsigned int inpDataSize)
+void BufferClass::Buffer(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void *inpData, unsigned int inpDataSize)
 {
+	if (totalDataSize > 0) RemovePast();
+
 	instanceRef = &inpInstance;
 	VkMemoryRequirements memReqs;
 
@@ -627,13 +631,12 @@ void BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE 
 		</div>
 	</div>
 	<h1>Acceleration Structure</h1>
-	I use the same class for BLAS and TLAS. Basically how you use it defines whether it is a BLAS or a TLAS and it is used as a base class for geometry or the scene.
-	<code>CreateAccelStruct(...)</code> creates the acceleration structure while <code>SubmitCreateAccelStruct(...)</code> really is meant for updating it.
-	<code>SubmitCreateAccelStruct(...)</code> is called at the end of <code>CreateAccelStruct(...)</code> regardless and this usage pattern should seem familiar to you.<p/>
-	In the new version the names are changed to properly reflect their intended use: <code>CreateAccelStruct(...)</code> and <code>UpdateAccelStruct(...)</code>.<p/>
-	As you can see, <code>GetScratchBufferSize(...)</code> is gone and we do not call the memory manager (i.e. <code>AllocMem(...)</code>) directly any longer.
-	This is nice as now one less class interfaces the memory manager directly.<p/>
-	As previously mentioned, geometry is fed via <code>VkAccelerationStructureGeometryKHR</code> rather than <code>VkGeometryNV</code>.
+	I use the same class for BLAS and TLAS. In this case, the usage defines whether we get a BLAS or a TLAS. It is a base class for both individual geometry and the scene.
+	<code>CreateAccelStruct(...)</code> creates the acceleration structure while <code>SubmitCreateAccelStruct(...)</code> is meant for updating it.
+	A call to <code>SubmitCreateAccelStruct(...)</code> following <code>CreateAccelStruct(...)</code> should seem familiar to you.<p/>
+	Our new version changes names to more closely reflect their intended use: <code>CreateAccelStruct(...)</code> and <code>UpdateAccelStruct(...)</code>.<p/>
+	As you can see, <code>GetScratchBufferSize(...)</code> is gone and we do not call the memory manager (i.e. <code>AllocMem(...)</code>) directly any longer: one less class interfacing the memory manager directly!<p/>
+	Also, geometry is fed via <code>VkAccelerationStructureGeometryKHR</code> rather than <code>VkGeometryNV</code>.
 	User-side instance data struct <code>VkGeometryInstance</code> is no longer needed and <code>VkAccelerationStructureInstanceKHR</code> is provided via Vulkan itself.
 	<p/>
 	<div class="panel-holder">
@@ -1024,7 +1027,7 @@ KHR_RT::RTAccelStruct::~RTAccelStruct()
 		</div>
 	</div>
 	<h1>Geometry (BLAS abstraction)</h1>
-	RTXGeometry class is simply an amendment to regular vertex buffers. It allows any geometry to turn into an acceleration structure in case it needs to (when hardware raytracing is available).
+	RTXGeometry class is simply an amendment to regular vertex buffers. It allows any geometry to hold an acceleration structure in case it needs to (when hardware raytracing is available).
 	It inherits the acceleration structure base class described above.<p/>
 	On the NV side <code>traceGeom</code> is <code>VkGeometryNV</code> and on the KHR side it is <code>VkAccelerationStructureGeometryKHR</code>.
 	Please note where I erroneously set <code>traceGeom.geometry.aabbs</code> without really providing any real further data. I can't recall why I ever set this. I'm tempted to blame an old tutorial copy-paste situation.<p/>
@@ -1185,13 +1188,13 @@ void KHR_RT::RTGeometry::SetDirty()
 	</div>
 	<p/>
 	<h1>The Scene (TLAS abstraction)</h1>
-	This is the code that handles all top-level scene stuff.<p/>
-	<code>InstanceClass</code> is a Vulkan instance and <code>InstanceProperties</code> is a geometry instance property struct. Don't get them confused.
-	In that same breath, <code>allInstanceData</code> is populated and used as an instance property buffer (i.e. property fetching during ray hits for example) and isn't for getting the API to function.<p/>
+	This code handles top-level scene-related constructs.<p/>
+	In our code, <code>InstanceClass</code> is a Vulkan instance and <code>InstanceProperties</code> is a geometry instance property struct. Make sure to not confuse these.
+	Additionally, <code>allInstanceData</code> is populated and used as an instance property buffer (i.e. property fetching during ray hits for example).<p/>
 	You won't necessarily see what will happen to <code>material</code> here. It will be used later to build a variable count descriptor set for materials.<p/>
-	Here's something that might catch your attention. In both <code>Add(...)</code> and <code>Update(...)</code> I'm setting the instance transform to identity.
-	Why you might ask? All instances in my application are backed by memory... for... reasons. Chances are you're bound by this for skinned crowds as well.<p/>
-	If you're not doing this, modifying this code to supply an affine transformation matrix is trivial.<p/>
+	Here's something that might catch your attention: in both <code>Add(...)</code> and <code>Update(...)</code> the instance transform to set to identity.
+	Why you might ask? All instances in this application are backed by memory... for reasons beyond the scope of this writing. The reasoning is however, somewhat related to how skinned crowds are transformed/re-fit.<p/>
+	If you do instance your BLASes, modifying this code to supply said 3x4 affine transformation matrix should be trivial.<p/>
 	In terms of Vulkan related material, most of what you should focus on is how <code>curInst</code> is set. Especially the fact that a buffer device address is fed in rather than an acceleration structure handle.
 	The call to <code>GetAccelerationStructureHandle</code> is more or less defensive programming... just making sure the acceleration structure handle is fetched in case it wasn't created.
 	<div class="panel-holder">
