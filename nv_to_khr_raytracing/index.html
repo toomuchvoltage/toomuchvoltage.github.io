@@ -9,6 +9,8 @@
 	<title>Transition guide from VK_NV_raytracing to (final) VK_KHR_raytracing</title>
 	<link rel="icon" type="image/png" href="./images/favicon.png"/>
 	<link rel="stylesheet" type="text/css" href="./css/main.css">
+	<link rel="stylesheet" id="prettifyTheme" type="text/css" href="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/skins/desert.css">
+	<script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
 	<script>
 	function switchLightDarkMode()
 	{
@@ -28,6 +30,8 @@
 			for (let i = 0; i != allLinks.length; i++) {
 				allLinks[i].style.color = "#222222";
 			}
+			let prettifyTheme = document.getElementById("prettifyTheme");
+			prettifyTheme.href = "";
 			window.displayMode = "light";
 		}
 		else
@@ -46,6 +50,8 @@
 			for (let i = 0; i != allLinks.length; i++) {
 				allLinks[i].style.color = "#87ceeb";
 			}
+			let prettifyTheme = document.getElementById("prettifyTheme");
+			prettifyTheme.href = "https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/skins/desert.css";
 			window.displayMode = "dark";
 		}
 	}
@@ -80,7 +86,7 @@
 		<div class="left-panel">
 			<div class="panel-heading"><h2>Before...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 std::vector<const char*> enabledDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, 
 					VK_KHR_MAINTENANCE3_EXTENSION_NAME, 
 					VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME, 
@@ -112,13 +118,13 @@ deviceCreateInfo.pNext = &deviceDescriptorIndexingFeature;
 deviceCreateInfo.queueCreateInfoCount = 1;
 deviceCreateInfo.pQueueCreateInfos = queueCreateInfo;
 deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 		<div class="right-panel">
 			<div class="panel-heading"><h2>After...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 std::vector<const char*> enabledDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 					VK_KHR_MAINTENANCE3_EXTENSION_NAME,
 					VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
@@ -182,7 +188,7 @@ deviceCreateInfo.pNext = &deviceDescriptorIndexingFeature;
 deviceCreateInfo.queueCreateInfoCount = 1;
 deviceCreateInfo.pQueueCreateInfos = queueCreateInfo;
 deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 	</div>
@@ -194,7 +200,7 @@ deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 		<div class="left-panel">
 			<div class="panel-heading"><h2>Before...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 namespace NVIDIA_RTX
 {
 	class RTXInstance
@@ -273,13 +279,13 @@ bool NVIDIA_RTX::RTXInstance::Enabled()
 {
 	return rtxEnabled;
 }
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 		<div class="right-panel">
 			<div class="panel-heading"><h2>After...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 namespace KHR_RT
 {
 	class RTInstance
@@ -354,7 +360,7 @@ bool KHR_RT::RTInstance::Enabled()
 {
 	return rtEnabled;
 }
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 	</div>
@@ -365,7 +371,7 @@ bool KHR_RT::RTInstance::Enabled()
 		<div class="left-panel">
 			<div class="panel-heading"><h2>Before...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 
 // Chunks are allocated using one of these usage flags (not used in this snippet)
 enum MEMORY_MAP_TYPE
@@ -380,13 +386,13 @@ enum MEMORY_MAP_TYPE
 allocInfo.allocationSize = chunkMaxSize;
 result = vkAllocateMemory(inpDev, &allocInfo, nullptr, &addedChunkRef.mem);
 if (result != VK_SUCCESS) throw std::runtime_error("Could not allocate memory chunk");
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 		<div class="right-panel">
 			<div class="panel-heading"><h2>After...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 
 // Basically the RTX chunk is now anything that needs device address
 enum MEMORY_MAP_TYPE
@@ -410,7 +416,7 @@ if (RTInstance::Enabled() && memoryMapType == DEV_ADDRESS) // Requested chunk is
 }
 result = vkAllocateMemory(inpDev, &allocInfo, nullptr, &addedChunkRef.mem);
 if (result != VK_SUCCESS) throw std::runtime_error("Could not allocate memory chunk");
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 	</div>
@@ -425,7 +431,7 @@ if (result != VK_SUCCESS) throw std::runtime_error("Could not allocate memory ch
 		<div class="left-panel">
 			<div class="panel-heading"><h2>Before...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 enum MEMORY_USAGE
 {
 	USAGE_SRC = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -521,13 +527,13 @@ void BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE 
 	try { SubmitCommandBuffer(); }
 	catch (...) { RemovePast(); throw std::runtime_error("Could not submit setup cmd buffer for buffer creation"); }
 }
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 		<div class="right-panel">
 			<div class="panel-heading"><h2>After...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 // We have new buffer usage modes
 enum MEMORY_USAGE
 {
@@ -626,7 +632,7 @@ void BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE 
 	try { SubmitCommandBuffer(); }
 	catch (...) { RemovePast(); throw std::runtime_error("Could not submit setup cmd buffer for buffer creation"); }
 }
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 	</div>
@@ -643,7 +649,7 @@ void BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE 
 		<div class="left-panel">
 			<div class="panel-heading"><h2>Before...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 void NVIDIA_RTX::RTXAccelStruct::RemovePast()
 {
 	if (!ptrToInstance) return;
@@ -790,13 +796,13 @@ NVIDIA_RTX::RTXAccelStruct::~RTXAccelStruct()
 {
 	RemovePast();
 }
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 		<div class="right-panel">
 			<div class="panel-heading"><h2>After...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 void KHR_RT::RTAccelStruct::RemovePast()
 {
 	if (!ptrToInstance) return;
@@ -1022,7 +1028,7 @@ KHR_RT::RTAccelStruct::~RTAccelStruct()
 {
 	RemovePast();
 }
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 	</div>
@@ -1036,7 +1042,7 @@ KHR_RT::RTAccelStruct::~RTAccelStruct()
 		<div class="left-panel">
 			<div class="panel-heading"><h2>Before...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 NVIDIA_RTX::RTXGeometry::RTXGeometry()
 {
 	ptrToInstance = nullptr;
@@ -1103,13 +1109,13 @@ void NVIDIA_RTX::RTXGeometry::SetDirty()
 	// This should be called when geometry changes inside a shader...
 	dirty = true;
 }
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 		<div class="right-panel">
 			<div class="panel-heading"><h2>After...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 KHR_RT::RTGeometry::RTGeometry()
 {
 	ptrToInstance = nullptr;
@@ -1182,7 +1188,7 @@ void KHR_RT::RTGeometry::SetDirty()
 	// This should be called when geometry changes inside a shader...
 	dirty = true;
 }
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 	</div>
@@ -1201,7 +1207,7 @@ void KHR_RT::RTGeometry::SetDirty()
 		<div class="left-panel">
 			<div class="panel-heading"><h2>Before...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 void NVIDIA_RTX::RTXScene::RemovePast()
 {
 	if (!ptrToInstance) return;
@@ -1371,13 +1377,13 @@ void NVIDIA_RTX::RTXScene::MarkSceneOld()
 {
 	signifyNewScene = false;
 }
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 		<div class="right-panel">
 			<div class="panel-heading"><h2>After...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 void KHR_RT::RTScene::RemovePast()
 {
 	if (!ptrToInstance) return;
@@ -1545,7 +1551,7 @@ void KHR_RT::RTScene::MarkSceneOld()
 {
 	signifyNewScene = false;
 }
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 	</div>
@@ -1557,7 +1563,7 @@ void KHR_RT::RTScene::MarkSceneOld()
 		<div class="left-panel-third">
 			<div class="panel-heading"><h2>Originally...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 void NVIDIA_RTX::RTXPipelineStateClass::ErasePipelineState()
 {
 	if (!ptrToInstance) return;
@@ -1651,13 +1657,13 @@ NVIDIA_RTX::RTXPipelineStateClass::~RTXPipelineStateClass()
 {
 	ErasePipelineState();
 }
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 		<div class="center-panel-third">
 			<div class="panel-heading"><h2>Before...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 void NVIDIA_RTX::RTXPipelineStateClass::ErasePipelineState()
 {
 	if (!ptrToInstance) return;
@@ -1758,13 +1764,13 @@ NVIDIA_RTX::RTXPipelineStateClass::~RTXPipelineStateClass()
 {
 	ErasePipelineState();
 }
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 		<div class="right-panel-third">
 			<div class="panel-heading"><h2>After...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 void KHR_RT::RTPipelineStateClass::ErasePipelineState()
 {
 	if (!ptrToInstance) return;
@@ -1865,7 +1871,7 @@ KHR_RT::RTPipelineStateClass::~RTPipelineStateClass()
 {
 	ErasePipelineState();
 }
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 	</div>
@@ -1876,7 +1882,7 @@ KHR_RT::RTPipelineStateClass::~RTPipelineStateClass()
 		<div class="left-panel">
 			<div class="panel-heading"><h2>Before...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 NVIDIA_RTX::RTXTracelet::RTXTracelet()
 {
 	ptrToInstance = nullptr;
@@ -1941,13 +1947,13 @@ void NVIDIA_RTX::RTXTracelet::makeSerial()
 {
 	submissionMode = SUBMIT_SERIAL;
 }
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 		<div class="right-panel">
 			<div class="panel-heading"><h2>After...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 
 KHR_RT::RTTracelet::RTTracelet()
 {
@@ -2018,7 +2024,7 @@ void KHR_RT::RTTracelet::makeSerial()
 {
 	submissionMode = SUBMIT_SERIAL;
 }
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 	</div>
@@ -2029,23 +2035,23 @@ void KHR_RT::RTTracelet::makeSerial()
 		<div class="left-panel">
 			<div class="panel-heading"><h2>Before...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 for %%A in (*.rgen) do glslangvalidator -V %%A -o %%A.spv
 for %%A in (*.rchit) do glslangvalidator -V %%A -o %%A.spv
 for %%A in (*.rmiss) do glslangvalidator -V %%A -o %%A.spv
 for %%A in (*.rahit) do glslangvalidator -V %%A -o %%A.spv
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 		<div class="right-panel">
 			<div class="panel-heading"><h2>After...</h2></div>
 			<div class="panel-content">
-			<xmp style="overflow: scroll;">
+			<pre class="prettyprint" style="overflow: scroll;"><code class="language-cpp">
 for %%A in (*.rgen) do glslangvalidator --target-env spirv1.4 -V %%A -o %%A.spv
 for %%A in (*.rchit) do glslangvalidator --target-env spirv1.4 -V %%A -o %%A.spv
 for %%A in (*.rmiss) do glslangvalidator --target-env spirv1.4 -V %%A -o %%A.spv
 for %%A in (*.rahit) do glslangvalidator --target-env spirv1.4 -V %%A -o %%A.spv
-			</xmp>
+			</code></pre>
 			</div>
 		</div>
 	</div>
