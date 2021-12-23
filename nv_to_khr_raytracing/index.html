@@ -149,7 +149,7 @@ deviceFeatures.tessellationShader = VK_TRUE;
 deviceFeatures.vertexPipelineStoresAndAtomics = VK_TRUE;
 deviceFeatures.fragmentStoresAndAtomics = VK_TRUE;
 
-VkPhysicalDeviceAccelerationStructureFeaturesKHR vkPhysicalDeviceAccelerationStructureFeatures;
+VkPhysicalDeviceAccelerationStructureFeaturesKHR vkPhysicalDeviceAccelerationStructureFeatures = {};
 vkPhysicalDeviceAccelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
 vkPhysicalDeviceAccelerationStructureFeatures.pNext = VK_NULL_HANDLE;
 vkPhysicalDeviceAccelerationStructureFeatures.accelerationStructure = VK_TRUE;
@@ -158,7 +158,7 @@ vkPhysicalDeviceAccelerationStructureFeatures.accelerationStructureHostCommands 
 vkPhysicalDeviceAccelerationStructureFeatures.accelerationStructureIndirectBuild = VK_FALSE;
 vkPhysicalDeviceAccelerationStructureFeatures.descriptorBindingAccelerationStructureUpdateAfterBind = VK_TRUE;
 
-VkPhysicalDeviceRayTracingPipelineFeaturesKHR vkPhysicalDeviceRayTracingPipelineFeatures;
+VkPhysicalDeviceRayTracingPipelineFeaturesKHR vkPhysicalDeviceRayTracingPipelineFeatures = {};
 vkPhysicalDeviceRayTracingPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
 vkPhysicalDeviceRayTracingPipelineFeatures.pNext = &vkPhysicalDeviceAccelerationStructureFeatures;
 vkPhysicalDeviceRayTracingPipelineFeatures.rayTracingPipeline = VK_TRUE;
@@ -167,7 +167,7 @@ vkPhysicalDeviceRayTracingPipelineFeatures.rayTracingPipelineShaderGroupHandleCa
 vkPhysicalDeviceRayTracingPipelineFeatures.rayTracingPipelineTraceRaysIndirect = VK_FALSE;
 vkPhysicalDeviceRayTracingPipelineFeatures.rayTraversalPrimitiveCulling = VK_FALSE;
 
-VkPhysicalDeviceBufferDeviceAddressFeatures vkPhysicalDeviceBufferAddressFeatures;
+VkPhysicalDeviceBufferDeviceAddressFeatures vkPhysicalDeviceBufferAddressFeatures = {};
 vkPhysicalDeviceBufferAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
 vkPhysicalDeviceBufferAddressFeatures.pNext = &vkPhysicalDeviceRayTracingPipelineFeatures;
 vkPhysicalDeviceBufferAddressFeatures.bufferDeviceAddress = VK_TRUE;
@@ -266,7 +266,7 @@ void NVIDIA_RTX::RTXInstance::Enable(InstanceClass & inpInstance)
 	raytracingProperties.pNext = nullptr;
 	raytracingProperties.maxRecursionDepth = 8;
 	raytracingProperties.shaderGroupHandleSize = 0;
-	VkPhysicalDeviceProperties2 props;
+	VkPhysicalDeviceProperties2 props = {};
 	props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 	props.pNext = &raytracingProperties;
 	props.properties = { };
@@ -347,7 +347,7 @@ void KHR_RT::RTInstance::Enable(InstanceClass & inpInstance)
 	raytracingPipelineProperties.pNext = nullptr;
 	raytracingPipelineProperties.maxRayRecursionDepth = 8;
 	raytracingPipelineProperties.shaderGroupHandleSize = 0;
-	VkPhysicalDeviceProperties2 props;
+	VkPhysicalDeviceProperties2 props = {};
 	props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 	props.pNext = &raytracingPipelineProperties;
 	props.properties = { };
@@ -405,7 +405,7 @@ enum MEMORY_MAP_TYPE
 ...
 
 allocInfo.allocationSize = chunkMaxSize;
-VkMemoryAllocateFlagsInfo memFlagInfo;
+VkMemoryAllocateFlagsInfo memFlagInfo = {};
 if (RTInstance::Enabled() && memoryMapType == DEV_ADDRESS) // Requested chunk is an RT-type chunk... requester needs device address
 {
 	memFlagInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO_KHR;
@@ -450,7 +450,7 @@ void BufferClass::Buffer(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, B
 	if (totalDataSize > 0) RemovePast();
 
 	instanceRef = &inpInstance;
-	VkMemoryRequirements memReqs;
+	VkMemoryRequirements memReqs = {};
 
 	usage = inpUsage;
 	memOpts = inpMemOpts;
@@ -519,7 +519,7 @@ void BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE 
 	catch (...) { RemovePast(); throw std::runtime_error("Could not begin setup cmd buffer for buffer creation"); }
 
 	copyRegion.size = totalDataSize;
-	vkCmdCopyBuffer(cmdBuffers[0], bufferStaging.buffer, buffer, 1, &copyRegion);
+	vkCmdCopyBuffer(cmdBuffers[0], bufferStaging.buffer, buffer, 1, &amp;copyRegion);
 
 	try { EndCommandBuffer(); }
 	catch (...) { RemovePast(); throw std::runtime_error("Could not end setup cmd buffer for buffer creation"); }
@@ -555,7 +555,7 @@ void BufferClass::Buffer(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, B
 	if (totalDataSize > 0) RemovePast();
 
 	instanceRef = &inpInstance;
-	VkMemoryRequirements memReqs;
+	VkMemoryRequirements memReqs = {};
 
 	usage = inpUsage;
 	memOpts = inpMemOpts;
@@ -624,7 +624,7 @@ void BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE 
 	catch (...) { RemovePast(); throw std::runtime_error("Could not begin setup cmd buffer for buffer creation"); }
 
 	copyRegion.size = totalDataSize;
-	vkCmdCopyBuffer(cmdBuffers[0], bufferStaging.buffer, buffer, 1, &copyRegion);
+	vkCmdCopyBuffer(cmdBuffers[0], bufferStaging.buffer, buffer, 1, &amp;copyRegion);
 
 	try { EndCommandBuffer(); }
 	catch (...) { RemovePast(); throw std::runtime_error("Could not end setup cmd buffer for buffer creation"); }
@@ -666,13 +666,13 @@ VkDeviceSize NVIDIA_RTX::RTXAccelStruct::GetScratchBufferSize(VkAccelerationStru
 {
 	if (!ptrToInstance) throw std::runtime_error("No way to get scratch buffer size: no ptr to Instance.");
 
-	VkAccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo;
+	VkAccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo = {};
 	memoryRequirementsInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
 	memoryRequirementsInfo.pNext = nullptr;
 	memoryRequirementsInfo.accelerationStructure = handle;
 	memoryRequirementsInfo.type = updateAction ? VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_UPDATE_SCRATCH_NV : VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_BUILD_SCRATCH_NV;
 
-	VkMemoryRequirements2 memoryRequirements;
+	VkMemoryRequirements2 memoryRequirements = {};
 	RTXInstance::vkGetAccelerationStructureMemoryRequirementsNV(ptrToInstance->device, &memoryRequirementsInfo, &memoryRequirements);
 
 	VkDeviceSize result = memoryRequirements.memoryRequirements.size;
@@ -683,7 +683,7 @@ void NVIDIA_RTX::RTXAccelStruct::CreateAccelStruct(bool isBlas, VkGeometryNV * i
 {
 	ptrToInstance = &inpInstance;
 
-	VkAccelerationStructureCreateInfoNV accelerationStructureInfo;
+	VkAccelerationStructureCreateInfoNV accelerationStructureInfo = {};
 	accelerationStructureInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_NV;
 	accelerationStructureInfo.pNext = nullptr;
 	accelerationStructureInfo.compactedSize = 0;
@@ -699,16 +699,16 @@ void NVIDIA_RTX::RTXAccelStruct::CreateAccelStruct(bool isBlas, VkGeometryNV * i
 	if (code != VK_SUCCESS) { RemovePast(); throw std::runtime_error("Could not create acceleration structure"); }
 	hasAccelStruct = true;
 
-	VkAccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo;
+	VkAccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo = {};
 	memoryRequirementsInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
 	memoryRequirementsInfo.pNext = nullptr;
 	memoryRequirementsInfo.accelerationStructure = accelStruct;
 	memoryRequirementsInfo.type = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_OBJECT_NV;
 
-	VkMemoryRequirements2 memoryRequirements;
+	VkMemoryRequirements2 memoryRequirements = {};
 	RTXInstance::vkGetAccelerationStructureMemoryRequirementsNV(ptrToInstance->device, &memoryRequirementsInfo, &memoryRequirements);
 
-	VkMemoryAllocateInfo memoryAllocateInfo;
+	VkMemoryAllocateInfo memoryAllocateInfo = {};
 	memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memoryAllocateInfo.pNext = nullptr;
 	memoryAllocateInfo.allocationSize = memoryRequirements.memoryRequirements.size;
@@ -725,7 +725,7 @@ void NVIDIA_RTX::RTXAccelStruct::CreateAccelStruct(bool isBlas, VkGeometryNV * i
 	}
 	hasSubAlloc = true;
 
-	VkBindAccelerationStructureMemoryInfoNV bindInfo;
+	VkBindAccelerationStructureMemoryInfoNV bindInfo = {};
 	bindInfo.sType = VK_STRUCTURE_TYPE_BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_NV;
 	bindInfo.pNext = nullptr;
 	bindInfo.accelerationStructure = accelStruct;
@@ -744,7 +744,7 @@ void NVIDIA_RTX::RTXAccelStruct::SubmitCreateAccelStruct(bool isBlas, VkGeometry
 {
 	if (!ptrToInstance) throw std::runtime_error("Cannot submit create accel struct request since a ptr to instance was not found");
 
-	VkAccelerationStructureInfoNV asInfo;
+	VkAccelerationStructureInfoNV asInfo = {};
 	asInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
 	asInfo.pNext = NULL;
 	asInfo.type = isBlas ? VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_NV : VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV;
@@ -1138,7 +1138,7 @@ void KHR_RT::RTGeometry::SetGeom(BufferClass & vertBuffer, unsigned int vertexSi
 
 	ptrToInstance = &inpInstance;
 
-	VkBufferDeviceAddressInfo bufDevAdInfo;
+	VkBufferDeviceAddressInfo bufDevAdInfo = {};
 	bufDevAdInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
 	bufDevAdInfo.pNext = VK_NULL_HANDLE;
 	bufDevAdInfo.buffer = vertBuffer.buffer;
