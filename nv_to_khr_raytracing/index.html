@@ -1198,7 +1198,7 @@ void KHR_RT::RTGeometry::SetDirty()
 	In our code, <code>InstanceClass</code> is a Vulkan instance and <code>InstanceProperties</code> is a geometry instance property struct. Make sure to not confuse these.
 	Additionally, <code>allInstanceData</code> is populated and used as an instance property buffer (i.e. property fetching during ray hits for example).<p/>
 	You won't necessarily see what will happen to <code>material</code> here. It will be used later to build a variable count descriptor set for materials.<p/>
-	Here's something that might catch your attention: in both <code>Add(...)</code> and <code>Update(...)</code> the instance transform to set to identity.
+	Here's something that might catch your attention: in both <code>Add(...)</code> and <code>Update(...)</code> the instance transform is set to the identity matrix.
 	Why you might ask? All instances in this application are backed by memory... for reasons beyond the scope of this writing. The reasoning is however, somewhat related to how skinned crowds are transformed/re-fit.<p/>
 	If you do instance your BLASes, modifying this code to supply said 3x4 affine transformation matrix should be trivial.<p/>
 	In terms of Vulkan related material, most of what you should focus on is how <code>curInst</code> is set. Especially the fact that a buffer device address is fed in rather than an acceleration structure handle.
@@ -1249,7 +1249,7 @@ TraceItem NVIDIA_RTX::RTXScene::Add(std::vector <ImageClass *> & material, RTXGe
 	retVal.material = material;
 	retVal.instanceData = inpInstanceProps;
 
-	retVal.itemId = marseneTwister64BitPRNG ();
+	retVal.itemId = mersenneTwister64BitPRNG ();
 
 	uint64_t accelerationStructureHandle;
 	VkResult code = RTXInstance::vkGetAccelerationStructureHandleNV(ptrToInstance->device, geom.accelStruct, sizeof(uint64_t), &accelerationStructureHandle);
@@ -1425,7 +1425,7 @@ TraceItem KHR_RT::RTScene::Add(std::vector <ImageClass *> & material, RTGeometry
 	retVal.material = material;
 	retVal.instanceData = inpInstanceProps;
 
-	retVal.itemId = marseneTwister64BitPRNG ();
+	retVal.itemId = mersenneTwister64BitPRNG ();
 
 	VkAccelerationStructureDeviceAddressInfoKHR addressInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR };
 	addressInfo.accelerationStructure = geom.accelStruct;
