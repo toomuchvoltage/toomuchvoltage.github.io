@@ -294,15 +294,15 @@ namespace KHR_RT
 		static bool rtEnabled;
 
 	public:
-		static PFN_vkCreateAccelerationStructureKHR fpCreateAccelerationStructureKHR;
-		static PFN_vkDestroyAccelerationStructureKHR fpDestroyAccelerationStructureKHR;
-		static PFN_vkCmdBuildAccelerationStructuresKHR fpCmdBuildAccelerationStructuresKHR;
-		static PFN_vkCmdTraceRaysKHR fpCmdTraceRaysKHR;
-		static PFN_vkGetBufferDeviceAddressKHR fpGetBufferDeviceAddressKHR;
-		static PFN_vkCreateRayTracingPipelinesKHR fpCreateRayTracingPipelinesKHR;
-		static PFN_vkGetAccelerationStructureBuildSizesKHR fpGetAccelerationStructureBuildSizesKHR;
-		static PFN_vkGetAccelerationStructureDeviceAddressKHR fpGetAccelerationStructureDeviceAddressKHR;
-		static PFN_vkGetRayTracingShaderGroupHandlesKHR fpGetRayTracingShaderGroupHandlesKHR;
+		static PFN_vkCreateAccelerationStructureKHR vkCreateAccelerationStructureKHR;
+		static PFN_vkDestroyAccelerationStructureKHR vkDestroyAccelerationStructureKHR;
+		static PFN_vkCmdBuildAccelerationStructuresKHR vkCmdBuildAccelerationStructuresKHR;
+		static PFN_vkCmdTraceRaysKHR vkCmdTraceRaysKHR;
+		static PFN_vkGetBufferDeviceAddressKHR vkGetBufferDeviceAddressKHR;
+		static PFN_vkCreateRayTracingPipelinesKHR vkCreateRayTracingPipelinesKHR;
+		static PFN_vkGetAccelerationStructureBuildSizesKHR vkGetAccelerationStructureBuildSizesKHR;
+		static PFN_vkGetAccelerationStructureDeviceAddressKHR vkGetAccelerationStructureDeviceAddressKHR;
+		static PFN_vkGetRayTracingShaderGroupHandlesKHR vkGetRayTracingShaderGroupHandlesKHR;
 
 		static VkPhysicalDeviceRayTracingPipelinePropertiesKHR raytracingPipelineProperties;
 
@@ -318,30 +318,30 @@ namespace KHR_RT
 ...
 
 bool RTInstance::rtEnabled = false;
-PFN_vkCreateAccelerationStructureKHR RTInstance::fpCreateAccelerationStructureKHR = VK_NULL_HANDLE;
-PFN_vkDestroyAccelerationStructureKHR RTInstance::fpDestroyAccelerationStructureKHR = VK_NULL_HANDLE;
-PFN_vkCmdBuildAccelerationStructuresKHR RTInstance::fpCmdBuildAccelerationStructuresKHR = VK_NULL_HANDLE;
-PFN_vkCmdTraceRaysKHR RTInstance::fpCmdTraceRaysKHR = VK_NULL_HANDLE;
-PFN_vkGetBufferDeviceAddressKHR RTInstance::fpGetBufferDeviceAddressKHR = VK_NULL_HANDLE;
-PFN_vkCreateRayTracingPipelinesKHR RTInstance::fpCreateRayTracingPipelinesKHR = VK_NULL_HANDLE;
-PFN_vkGetAccelerationStructureBuildSizesKHR RTInstance::fpGetAccelerationStructureBuildSizesKHR = VK_NULL_HANDLE;
-PFN_vkGetAccelerationStructureDeviceAddressKHR RTInstance::fpGetAccelerationStructureDeviceAddressKHR = VK_NULL_HANDLE;
-PFN_vkGetRayTracingShaderGroupHandlesKHR RTInstance::fpGetRayTracingShaderGroupHandlesKHR = VK_NULL_HANDLE;
+PFN_vkCreateAccelerationStructureKHR RTInstance::vkCreateAccelerationStructureKHR = VK_NULL_HANDLE;
+PFN_vkDestroyAccelerationStructureKHR RTInstance::vkDestroyAccelerationStructureKHR = VK_NULL_HANDLE;
+PFN_vkCmdBuildAccelerationStructuresKHR RTInstance::vkCmdBuildAccelerationStructuresKHR = VK_NULL_HANDLE;
+PFN_vkCmdTraceRaysKHR RTInstance::vkCmdTraceRaysKHR = VK_NULL_HANDLE;
+PFN_vkGetBufferDeviceAddressKHR RTInstance::vkGetBufferDeviceAddressKHR = VK_NULL_HANDLE;
+PFN_vkCreateRayTracingPipelinesKHR RTInstance::vkCreateRayTracingPipelinesKHR = VK_NULL_HANDLE;
+PFN_vkGetAccelerationStructureBuildSizesKHR RTInstance::vkGetAccelerationStructureBuildSizesKHR = VK_NULL_HANDLE;
+PFN_vkGetAccelerationStructureDeviceAddressKHR RTInstance::vkGetAccelerationStructureDeviceAddressKHR = VK_NULL_HANDLE;
+PFN_vkGetRayTracingShaderGroupHandlesKHR RTInstance::vkGetRayTracingShaderGroupHandlesKHR = VK_NULL_HANDLE;
 VkPhysicalDeviceRayTracingPipelinePropertiesKHR RTInstance::raytracingPipelineProperties = { };
 
 ...
 
 void KHR_RT::RTInstance::Enable(InstanceClass & inpInstance)
 {
-	fpCreateAccelerationStructureKHR = reinterpret_cast<PFN_vkCreateAccelerationStructureKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkCreateAccelerationStructureKHR"));
-	fpDestroyAccelerationStructureKHR = reinterpret_cast<PFN_vkDestroyAccelerationStructureKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkDestroyAccelerationStructureKHR"));
-	fpCmdBuildAccelerationStructuresKHR = reinterpret_cast<PFN_vkCmdBuildAccelerationStructuresKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkCmdBuildAccelerationStructuresKHR"));
-	fpCmdTraceRaysKHR = reinterpret_cast<PFN_vkCmdTraceRaysKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkCmdTraceRaysKHR"));
-	fpGetBufferDeviceAddressKHR = reinterpret_cast<PFN_vkGetBufferDeviceAddressKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkGetBufferDeviceAddressKHR"));
-	fpCreateRayTracingPipelinesKHR = reinterpret_cast<PFN_vkCreateRayTracingPipelinesKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkCreateRayTracingPipelinesKHR"));
-	fpGetAccelerationStructureBuildSizesKHR = reinterpret_cast<PFN_vkGetAccelerationStructureBuildSizesKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkGetAccelerationStructureBuildSizesKHR"));
-	fpGetAccelerationStructureDeviceAddressKHR = reinterpret_cast<PFN_vkGetAccelerationStructureDeviceAddressKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkGetAccelerationStructureDeviceAddressKHR"));
-	fpGetRayTracingShaderGroupHandlesKHR = reinterpret_cast<PFN_vkGetRayTracingShaderGroupHandlesKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkGetRayTracingShaderGroupHandlesKHR"));
+	vkCreateAccelerationStructureKHR = reinterpret_cast<PFN_vkCreateAccelerationStructureKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkCreateAccelerationStructureKHR"));
+	vkDestroyAccelerationStructureKHR = reinterpret_cast<PFN_vkDestroyAccelerationStructureKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkDestroyAccelerationStructureKHR"));
+	vkCmdBuildAccelerationStructuresKHR = reinterpret_cast<PFN_vkCmdBuildAccelerationStructuresKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkCmdBuildAccelerationStructuresKHR"));
+	vkCmdTraceRaysKHR = reinterpret_cast<PFN_vkCmdTraceRaysKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkCmdTraceRaysKHR"));
+	vkGetBufferDeviceAddressKHR = reinterpret_cast<PFN_vkGetBufferDeviceAddressKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkGetBufferDeviceAddressKHR"));
+	vkCreateRayTracingPipelinesKHR = reinterpret_cast<PFN_vkCreateRayTracingPipelinesKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkCreateRayTracingPipelinesKHR"));
+	vkGetAccelerationStructureBuildSizesKHR = reinterpret_cast<PFN_vkGetAccelerationStructureBuildSizesKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkGetAccelerationStructureBuildSizesKHR"));
+	vkGetAccelerationStructureDeviceAddressKHR = reinterpret_cast<PFN_vkGetAccelerationStructureDeviceAddressKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkGetAccelerationStructureDeviceAddressKHR"));
+	vkGetRayTracingShaderGroupHandlesKHR = reinterpret_cast<PFN_vkGetRayTracingShaderGroupHandlesKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkGetRayTracingShaderGroupHandlesKHR"));
 
 	raytracingPipelineProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
 	raytracingPipelineProperties.pNext = nullptr;
@@ -807,7 +807,7 @@ void KHR_RT::RTAccelStruct::RemovePast()
 {
 	if (!ptrToInstance) return;
 
-	if (hasAccelStruct) RTInstance::fpDestroyAccelerationStructureKHR(ptrToInstance->device, accelStruct, nullptr);
+	if (hasAccelStruct) RTInstance::vkDestroyAccelerationStructureKHR(ptrToInstance->device, accelStruct, nullptr);
 
 	hasAccelStruct = false;
 	ptrToInstance = nullptr;
@@ -832,7 +832,7 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 
 		VkAccelerationStructureBuildSizesInfoKHR sizeInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
 		sizeInfo.pNext = VK_NULL_HANDLE;
-		RTInstance::fpGetAccelerationStructureBuildSizesKHR(Instance.device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeomInfo, &inpGeomOffset->primitiveCount, &sizeInfo);
+		RTInstance::vkGetAccelerationStructureBuildSizesKHR(Instance.device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeomInfo, &inpGeomOffset->primitiveCount, &sizeInfo);
 
 		VkAccelerationStructureCreateInfoKHR createInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR };
 		createInfo.pNext = VK_NULL_HANDLE;
@@ -842,7 +842,7 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 		accelStructBuffer.Buffer(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, nullptr, (unsigned int)createInfo.size);
 		createInfo.buffer = accelStructBuffer.buffer;
 
-		VkResult result = RTInstance::fpCreateAccelerationStructureKHR(Instance.device, &createInfo, nullptr, &accelStruct);
+		VkResult result = RTInstance::vkCreateAccelerationStructureKHR(Instance.device, &createInfo, nullptr, &accelStruct);
 		if (result != VK_SUCCESS) { RemovePast(); throw std::runtime_error("Could not create accel struct"); }
 		hasAccelStruct = true;
 		accelerationStructureBuildGeomInfo.dstAccelerationStructure = accelStruct;
@@ -851,7 +851,7 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 		VkBufferDeviceAddressInfo scratchBufferInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
 		scratchBufferInfo.pNext = VK_NULL_HANDLE;
 		scratchBufferInfo.buffer = curScratchBuffer->buffer;
-		VkDeviceAddress scratchAddress = RTInstance::fpGetBufferDeviceAddressKHR(Instance.device, &scratchBufferInfo);
+		VkDeviceAddress scratchAddress = RTInstance::vkGetBufferDeviceAddressKHR(Instance.device, &scratchBufferInfo);
 
 		accelerationStructureBuildGeomInfo.scratchData.deviceAddress = scratchAddress;
 
@@ -859,7 +859,7 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 
 		std::array<VkAccelerationStructureBuildRangeInfoKHR *, 1> inpGeomOffsetArray = { inpGeomOffset };
 
-		RTInstance::fpCmdBuildAccelerationStructuresKHR(cmdBuffers[0], 1, &accelerationStructureBuildGeomInfo, inpGeomOffsetArray.data());
+		RTInstance::vkCmdBuildAccelerationStructuresKHR(cmdBuffers[0], 1, &accelerationStructureBuildGeomInfo, inpGeomOffsetArray.data());
 
 		EndCommandBuffer();
 		SubmitCommandBuffer();
@@ -877,7 +877,7 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 
 		VkBufferDeviceAddressInfo bufferInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
 		bufferInfo.buffer = instanceBuffer.buffer;
-		VkDeviceAddress instanceAddress = RTInstance::fpGetBufferDeviceAddressKHR(Instance.device, &bufferInfo);
+		VkDeviceAddress instanceAddress = RTInstance::vkGetBufferDeviceAddressKHR(Instance.device, &bufferInfo);
 
 		BeginCommandBuffer(*ptrToInstance);
 
@@ -898,7 +898,7 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 		accelerationStructureBuildGeomInfo.srcAccelerationStructure = VK_NULL_HANDLE;
 		uint32_t instanceCount = (uint32_t)instanceData->size();
 		VkAccelerationStructureBuildSizesInfoKHR sizeInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
-		RTInstance::fpGetAccelerationStructureBuildSizesKHR(Instance.device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeomInfo, &instanceCount, &sizeInfo);
+		RTInstance::vkGetAccelerationStructureBuildSizesKHR(Instance.device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeomInfo, &instanceCount, &sizeInfo);
 
 		VkAccelerationStructureCreateInfoKHR createInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR };
 		createInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
@@ -907,7 +907,7 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 		accelStructBuffer.Buffer(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, nullptr, (unsigned int)createInfo.size);
 		createInfo.buffer = accelStructBuffer.buffer;
 
-		VkResult result = RTInstance::fpCreateAccelerationStructureKHR(Instance.device, &createInfo, nullptr, &accelStruct);
+		VkResult result = RTInstance::vkCreateAccelerationStructureKHR(Instance.device, &createInfo, nullptr, &accelStruct);
 		if (result != VK_SUCCESS) { RemovePast(); throw std::runtime_error("Could not create accel struct"); }
 		hasAccelStruct = true;
 		accelerationStructureBuildGeomInfo.srcAccelerationStructure = VK_NULL_HANDLE;
@@ -916,13 +916,13 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 		BufferClass *curScratchBuffer = new BufferClass(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT | USAGE_SSBO, *ptrToInstance, nullptr, (unsigned int)sizeInfo.buildScratchSize);
 		VkBufferDeviceAddressInfo scratchBufferInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
 		scratchBufferInfo.buffer = curScratchBuffer->buffer;
-		VkDeviceAddress scratchAddress = RTInstance::fpGetBufferDeviceAddressKHR(Instance.device, &scratchBufferInfo);
+		VkDeviceAddress scratchAddress = RTInstance::vkGetBufferDeviceAddressKHR(Instance.device, &scratchBufferInfo);
 
 		accelerationStructureBuildGeomInfo.scratchData.deviceAddress = scratchAddress;
 
 		VkAccelerationStructureBuildRangeInfoKHR buildOffsetInfo{ static_cast<uint32_t>(instanceCount), 0, 0, 0 };
 		const VkAccelerationStructureBuildRangeInfoKHR* pBuildOffsetInfo = &buildOffsetInfo;
-		RTInstance::fpCmdBuildAccelerationStructuresKHR(cmdBuffers[0], 1, &accelerationStructureBuildGeomInfo, &pBuildOffsetInfo);
+		RTInstance::vkCmdBuildAccelerationStructuresKHR(cmdBuffers[0], 1, &accelerationStructureBuildGeomInfo, &pBuildOffsetInfo);
 
 		EndCommandBuffer();
 		SubmitCommandBuffer();
@@ -947,17 +947,17 @@ void KHR_RT::RTAccelStruct::UpdateAccelStruct(bool isBlas, VkAccelerationStructu
 		accelerationStructureBuildGeomInfo.dstAccelerationStructure = accelStruct;
 
 		VkAccelerationStructureBuildSizesInfoKHR sizeInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
-		RTInstance::fpGetAccelerationStructureBuildSizesKHR(ptrToInstance->device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeomInfo, &inpGeomOffset->primitiveCount, &sizeInfo);
+		RTInstance::vkGetAccelerationStructureBuildSizesKHR(ptrToInstance->device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeomInfo, &inpGeomOffset->primitiveCount, &sizeInfo);
 
 		BufferClass *curScratchBuffer = new BufferClass(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, nullptr, (unsigned int)sizeInfo.buildScratchSize);
 		VkBufferDeviceAddressInfo scratchBufferInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
 		scratchBufferInfo.buffer = curScratchBuffer->buffer;
-		VkDeviceAddress scratchAddress = RTInstance::fpGetBufferDeviceAddressKHR(Instance.device, &scratchBufferInfo);
+		VkDeviceAddress scratchAddress = RTInstance::vkGetBufferDeviceAddressKHR(Instance.device, &scratchBufferInfo);
 
 		accelerationStructureBuildGeomInfo.scratchData.deviceAddress = scratchAddress;
 
 		BeginCommandBuffer(*ptrToInstance);
-		RTInstance::fpCmdBuildAccelerationStructuresKHR(cmdBuffers[0], 1, &accelerationStructureBuildGeomInfo, &inpGeomOffset);
+		RTInstance::vkCmdBuildAccelerationStructuresKHR(cmdBuffers[0], 1, &accelerationStructureBuildGeomInfo, &inpGeomOffset);
 		EndCommandBuffer();
 		SubmitCommandBuffer();
 
@@ -974,7 +974,7 @@ void KHR_RT::RTAccelStruct::UpdateAccelStruct(bool isBlas, VkAccelerationStructu
 
 		VkBufferDeviceAddressInfo bufferInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
 		bufferInfo.buffer = instanceBuffer.buffer;
-		VkDeviceAddress instanceAddress = RTInstance::fpGetBufferDeviceAddressKHR(Instance.device, &bufferInfo);
+		VkDeviceAddress instanceAddress = RTInstance::vkGetBufferDeviceAddressKHR(Instance.device, &bufferInfo);
 
 		BeginCommandBuffer(*ptrToInstance);
 
@@ -995,7 +995,7 @@ void KHR_RT::RTAccelStruct::UpdateAccelStruct(bool isBlas, VkAccelerationStructu
 		accelerationStructureBuildGeomInfo.srcAccelerationStructure = VK_NULL_HANDLE;
 		uint32_t instanceCount = (uint32_t)instanceData->size();
 		VkAccelerationStructureBuildSizesInfoKHR sizeInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
-		RTInstance::fpGetAccelerationStructureBuildSizesKHR(Instance.device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeomInfo, &instanceCount, &sizeInfo);
+		RTInstance::vkGetAccelerationStructureBuildSizesKHR(Instance.device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeomInfo, &instanceCount, &sizeInfo);
 
 		accelerationStructureBuildGeomInfo.srcAccelerationStructure = accelStruct;
 		accelerationStructureBuildGeomInfo.dstAccelerationStructure = accelStruct;
@@ -1003,13 +1003,13 @@ void KHR_RT::RTAccelStruct::UpdateAccelStruct(bool isBlas, VkAccelerationStructu
 		BufferClass *curScratchBuffer = new BufferClass(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, nullptr, (unsigned int)sizeInfo.buildScratchSize);
 		VkBufferDeviceAddressInfo scratchBufferInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
 		scratchBufferInfo.buffer = curScratchBuffer->buffer;
-		VkDeviceAddress scratchAddress = RTInstance::fpGetBufferDeviceAddressKHR(Instance.device, &scratchBufferInfo);
+		VkDeviceAddress scratchAddress = RTInstance::vkGetBufferDeviceAddressKHR(Instance.device, &scratchBufferInfo);
 
 		accelerationStructureBuildGeomInfo.scratchData.deviceAddress = scratchAddress;
 
 		VkAccelerationStructureBuildRangeInfoKHR buildOffsetInfo{ static_cast<uint32_t>(instanceCount), 0, 0, 0 };
 		const VkAccelerationStructureBuildRangeInfoKHR* pBuildOffsetInfo = &buildOffsetInfo;
-		RTInstance::fpCmdBuildAccelerationStructuresKHR(cmdBuffers[0], 1, &accelerationStructureBuildGeomInfo, &pBuildOffsetInfo);
+		RTInstance::vkCmdBuildAccelerationStructuresKHR(cmdBuffers[0], 1, &accelerationStructureBuildGeomInfo, &pBuildOffsetInfo);
 
 		EndCommandBuffer();
 		SubmitCommandBuffer();
@@ -1142,7 +1142,7 @@ void KHR_RT::RTGeometry::SetGeom(BufferClass & vertBuffer, unsigned int vertexSi
 	bufDevAdInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
 	bufDevAdInfo.pNext = VK_NULL_HANDLE;
 	bufDevAdInfo.buffer = vertBuffer.buffer;
-	bufferDeviceAddress = RTInstance::fpGetBufferDeviceAddressKHR(Instance.device, &bufDevAdInfo);
+	bufferDeviceAddress = RTInstance::vkGetBufferDeviceAddressKHR(Instance.device, &bufDevAdInfo);
 
 	traceGeom = {};
 	traceGeom.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
@@ -1429,7 +1429,7 @@ TraceItem KHR_RT::RTScene::Add(std::vector <ImageClass *> & material, RTGeometry
 
 	VkAccelerationStructureDeviceAddressInfoKHR addressInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR };
 	addressInfo.accelerationStructure = geom.accelStruct;
-	VkDeviceAddress blasAddress = RTInstance::fpGetAccelerationStructureDeviceAddressKHR(inpInstance.device, &addressInfo);
+	VkDeviceAddress blasAddress = RTInstance::vkGetAccelerationStructureDeviceAddressKHR(inpInstance.device, &addressInfo);
 
 	VkAccelerationStructureInstanceKHR curInst;
 	for (int i = 0; i != 3; i++)
@@ -1520,7 +1520,7 @@ void KHR_RT::RTScene::Refresh()
 				VkAccelerationStructureDeviceAddressInfoKHR addressInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR };
 				addressInfo.accelerationStructure = curTraceItem.geomRef->accelStruct;
 
-				curTraceItem.rtInstanceData.accelerationStructureReference = RTInstance::fpGetAccelerationStructureDeviceAddressKHR(ptrToInstance->device, &addressInfo);
+				curTraceItem.rtInstanceData.accelerationStructureReference = RTInstance::vkGetAccelerationStructureDeviceAddressKHR(ptrToInstance->device, &addressInfo);
 			}
 		}
 	}
@@ -1838,7 +1838,7 @@ KHR_RT::RTPipelineStateClass::RTPipelineStateClass(InstanceClass & renderInst, D
 	if (result != VK_SUCCESS) { throw std::runtime_error("Could not create a pipeline cache"); }
 	havePipelineCache = true;
 
-	result = RTInstance::fpCreateRayTracingPipelinesKHR(ptrToInstance->device, VK_NULL_HANDLE, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline);
+	result = RTInstance::vkCreateRayTracingPipelinesKHR(ptrToInstance->device, VK_NULL_HANDLE, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline);
 	if (result != VK_SUCCESS) { ErasePipelineState(); throw std::runtime_error("Could not create rt pipeline"); }
 	haveRTPipeline = true;
 
@@ -1851,7 +1851,7 @@ KHR_RT::RTPipelineStateClass::RTPipelineStateClass(InstanceClass & renderInst, D
 	unsigned char *sbtData = new unsigned char[shaderBindingTableSize];
 	unsigned char *sbtDataAligned = new unsigned char[shaderBindingTableSizeAligned];
 
-	result = RTInstance::fpGetRayTracingShaderGroupHandlesKHR(ptrToInstance->device, pipeline, 0, (uint32_t)shaderGroups.size(), shaderBindingTableSize, sbtData);
+	result = RTInstance::vkGetRayTracingShaderGroupHandlesKHR(ptrToInstance->device, pipeline, 0, (uint32_t)shaderGroups.size(), shaderBindingTableSize, sbtData);
 	if (result != VK_SUCCESS) { ErasePipelineState(); throw std::runtime_error("Could not get shader group handle"); }
 	for (int i = 0; i != (uint32_t)shaderGroups.size(); i++)
 		memcpy(&sbtDataAligned[i * sbtChunkSize], &sbtData[i * RTInstance::raytracingPipelineProperties.shaderGroupHandleSize], RTInstance::raytracingPipelineProperties.shaderGroupHandleSize);
@@ -1997,7 +1997,7 @@ void KHR_RT::RTTracelet::Submit(unsigned int inpWidth, unsigned int inpHeight, u
 
 		VkBufferDeviceAddressInfo bufDevAdInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
 		bufDevAdInfo.buffer = PSO.shaderBindingTable.buffer;
-		VkDeviceAddress sbtDeviceAddress = RTInstance::fpGetBufferDeviceAddressKHR(Instance.device, &bufDevAdInfo);
+		VkDeviceAddress sbtDeviceAddress = RTInstance::vkGetBufferDeviceAddressKHR(Instance.device, &bufDevAdInfo);
 
 		std::array<VkStridedDeviceAddressRegionKHR, 4> strideAddresses{
 			VkStridedDeviceAddressRegionKHR{sbtDeviceAddress + 0u * sbtChunkSize, sbtChunkSize, sbtChunkSize},
@@ -2005,7 +2005,7 @@ void KHR_RT::RTTracelet::Submit(unsigned int inpWidth, unsigned int inpHeight, u
 			VkStridedDeviceAddressRegionKHR{sbtDeviceAddress + 2u * sbtChunkSize, sbtChunkSize, sbtChunkSize},
 			VkStridedDeviceAddressRegionKHR{0u,0u,0u} };
 
-		RTInstance::fpCmdTraceRaysKHR(cmdBuffers[0], &strideAddresses[0], &strideAddresses[1], &strideAddresses[2], &strideAddresses[3], inpWidth, inpHeight, inpDepth);
+		RTInstance::vkCmdTraceRaysKHR(cmdBuffers[0], &strideAddresses[0], &strideAddresses[1], &strideAddresses[2], &strideAddresses[3], inpWidth, inpHeight, inpDepth);
 
 		EndCommandBuffer();
 
