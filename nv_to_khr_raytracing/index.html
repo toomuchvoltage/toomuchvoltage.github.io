@@ -440,7 +440,7 @@ enum MEMORY_USAGE
 
 ...
 
-void BufferClass::Buffer(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void *inpData, unsigned int inpDataSize)
+void BufferClass::Buffer(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void *inpData, VkDeviceSize inpDataSize)
 {
 	if (totalDataSize > 0) RemovePast();
 
@@ -501,7 +501,7 @@ void BufferClass::Buffer(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, B
 	}
 }
 
-void BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void * inpData, unsigned int inpDataSize)
+void BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void * inpData, VkDeviceSize inpDataSize)
 {
 	totalDataSize = inpDataSize;
 
@@ -545,7 +545,7 @@ enum MEMORY_USAGE
 
 ...
 
-void BufferClass::Buffer(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void *inpData, unsigned int inpDataSize)
+void BufferClass::Buffer(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void *inpData, VkDeviceSize inpDataSize)
 {
 	if (totalDataSize > 0) RemovePast();
 
@@ -606,7 +606,7 @@ void BufferClass::Buffer(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, B
 	}
 }
 
-void BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void * inpData, unsigned int inpDataSize)
+void BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE inpMode, MEMORY_USAGE inpUsage, InstanceClass & inpInstance, void * inpData, VkDeviceSize inpDataSize)
 {
 	totalDataSize = inpDataSize;
 
@@ -741,12 +741,12 @@ void NVIDIA_RTX::RTXAccelStruct::SubmitCreateAccelStruct(bool isBlas, VkGeometry
 	VkDeviceSize scratchBufferSize = GetScratchBufferSize(accelStruct, updateAction);
 	if (scratchBufferSize > scratchBuffer.getSize())
 	{
-		scratchBuffer.Buffer(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_RTX, *ptrToInstance, nullptr, (unsigned int)scratchBufferSize);
+		scratchBuffer.Buffer(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_RTX, *ptrToInstance, nullptr, scratchBufferSize);
 	}
-	unsigned int curInstanceBufferSize = 0;
+	VkDeviceSize curInstanceBufferSize = 0;
 	if (!isBlas)
 	{
-		curInstanceBufferSize = (((((unsigned int)instanceData->size()) / 1000) + 1) * 1000) * sizeof(VkGeometryInstance);
+		curInstanceBufferSize = (VkDeviceSize)((((instanceData->size() / 1000) + 1) * 1000) * sizeof(VkGeometryInstance));
 	}
 
 	BeginCommandBuffer(*ptrToInstance);
@@ -821,7 +821,7 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 		createInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
 		createInfo.size = sizeInfo.accelerationStructureSize;
 
-		accelStructBuffer.Buffer(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, nullptr, (unsigned int)createInfo.size);
+		accelStructBuffer.Buffer(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, nullptr, createInfo.size);
 		createInfo.buffer = accelStructBuffer.buffer;
 
 		VkResult result = RTInstance::vkCreateAccelerationStructureKHR(Instance.device, &createInfo, nullptr, &accelStruct);
@@ -849,7 +849,7 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 	}
 	else
 	{
-		unsigned int curInstanceBufSize = (unsigned int)instanceData->size() * sizeof(VkAccelerationStructureInstanceKHR);
+		VkDeviceSize curInstanceBufSize = (VkDeviceSize)(instanceData->size() * sizeof(VkAccelerationStructureInstanceKHR));
 		
 		if (instanceBuffer.getSize() < curInstanceBufSize)
 		{
@@ -884,7 +884,7 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 		createInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
 		createInfo.size = sizeInfo.accelerationStructureSize;
 
-		accelStructBuffer.Buffer(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, nullptr, (unsigned int)createInfo.size);
+		accelStructBuffer.Buffer(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT, *ptrToInstance, nullptr, createInfo.size);
 		createInfo.buffer = accelStructBuffer.buffer;
 
 		VkResult result = RTInstance::vkCreateAccelerationStructureKHR(Instance.device, &createInfo, nullptr, &accelStruct);
@@ -944,7 +944,7 @@ void KHR_RT::RTAccelStruct::UpdateAccelStruct(bool isBlas, VkAccelerationStructu
 	}
 	else
 	{
-		unsigned int curInstanceBufSize = (unsigned int)instanceData->size() * sizeof(VkAccelerationStructureInstanceKHR);
+		VkDeviceSize curInstanceBufSize = (VkDeviceSize)(instanceData->size() * sizeof(VkAccelerationStructureInstanceKHR));
 
 		if (instanceBuffer.getSize() < curInstanceBufSize)
 		{
@@ -1276,9 +1276,9 @@ void NVIDIA_RTX::RTXScene::CreateInstanceData(std::vector <VkGeometryInstance> &
 
 	allInstanceData.clear();
 	allInstanceData.reserve(bufferInstanceCount);
-	if (instancePropertiesBuffer.getSize() / sizeof(InstanceProperties) < bufferInstanceCount)
+	if (((unsigned int)instancePropertiesBuffer.getSize()) / ((unsigned int)sizeof(InstanceProperties)) < bufferInstanceCount)
 	{
-		instancePropertiesBuffer.Buffer(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SSBO, *ptrToInstance, nullptr, bufferInstanceCount * sizeof(InstanceProperties));
+		instancePropertiesBuffer.Buffer(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SSBO, *ptrToInstance, nullptr, (VkDeviceSize)(bufferInstanceCount * (unsigned int)sizeof(InstanceProperties)));
 	}
 
 	unsigned int instanceIdCount = 0;
@@ -1451,9 +1451,9 @@ void KHR_RT::RTScene::CreateInstanceData(std::vector <VkAccelerationStructureIns
 
 	allInstanceData.clear();
 	allInstanceData.reserve(bufferInstanceCount);
-	if (instancePropertiesBuffer.getSize() / sizeof(InstanceProperties) < bufferInstanceCount)
+	if (((unsigned int)instancePropertiesBuffer.getSize()) / ((unsigned int)sizeof(InstanceProperties)) < bufferInstanceCount)
 	{
-		instancePropertiesBuffer.Buffer(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SSBO, *ptrToInstance, nullptr, bufferInstanceCount * sizeof(InstanceProperties));
+		instancePropertiesBuffer.Buffer(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SSBO, *ptrToInstance, nullptr, (VkDeviceSize)(bufferInstanceCount * (unsigned int)sizeof(InstanceProperties)));
 	}
 
 	unsigned int instanceIdCount = 0;
@@ -1605,7 +1605,7 @@ NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass(InstanceClass & renderI
 	<span class="nocode" style="color: red">/* We were not aligning here... */</span>
 	uint32_t shaderBindingTableSize = RTXInstance::raytracingProperties.shaderGroupHandleSize * (uint32_t)shaderGroups.size();
 
-	shaderBindingTable.Buffer(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SRC, Instance, nullptr, shaderBindingTableSize);
+	shaderBindingTable.Buffer(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SRC, Instance, nullptr, (VkDeviceSize)shaderBindingTableSize);
 	unsigned char *sbtData = new unsigned char[shaderBindingTableSize];
 
 	result = RTXInstance::vkGetRayTracingShaderGroupHandlesNV(ptrToInstance->device, pipeline, 0, (uint32_t)shaderGroups.size(), shaderBindingTableSize, sbtData);
@@ -1708,7 +1708,7 @@ NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass(InstanceClass & renderI
 	uint32_t shaderBindingTableSize = RTXInstance::raytracingProperties.shaderGroupHandleSize * (uint32_t)shaderGroups.size();
 	uint32_t shaderBindingTableSizeAligned = sbtChunkSize * (uint32_t)shaderGroups.size();
 
-	shaderBindingTable.Buffer(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SRC, Instance, nullptr, shaderBindingTableSizeAligned);
+	shaderBindingTable.Buffer(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SRC, Instance, nullptr, (VkDeviceSize)shaderBindingTableSizeAligned);
 	unsigned char *sbtData = new unsigned char[shaderBindingTableSize];
 	unsigned char *sbtDataAligned = new unsigned char[shaderBindingTableSizeAligned];
 
@@ -1815,7 +1815,7 @@ KHR_RT::RTPipelineStateClass::RTPipelineStateClass(InstanceClass & renderInst, D
 	uint32_t shaderBindingTableSize = RTInstance::raytracingPipelineProperties.shaderGroupHandleSize * (uint32_t)shaderGroups.size();
 	uint32_t shaderBindingTableSizeAligned = sbtChunkSize * (uint32_t)shaderGroups.size();
 
-	shaderBindingTable.Buffer(MEMORY_HOST_VISIBLE | MEMORY_HOST_COHERENT, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SRC | USAGE_SBT | USAGE_DEVICE_ADDRESS, Instance, nullptr, shaderBindingTableSizeAligned);
+	shaderBindingTable.Buffer(MEMORY_HOST_VISIBLE | MEMORY_HOST_COHERENT, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SRC | USAGE_SBT | USAGE_DEVICE_ADDRESS, Instance, nullptr, (VkDeviceSize)shaderBindingTableSizeAligned);
 	unsigned char *sbtData = new unsigned char[shaderBindingTableSize];
 	unsigned char *sbtDataAligned = new unsigned char[shaderBindingTableSizeAligned];
 
