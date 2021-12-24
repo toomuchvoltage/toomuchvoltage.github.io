@@ -194,8 +194,8 @@ deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 	</div>
 	<h1>Pointer fetching</h1>
 	Probably the most fun part of this article as it provides a high level view of what's being replaced and what's not necessary any more.
-	The usage pattern should be self evident: if you managed to create your device with hardware raytracing call <code>::Enable(...)</code> and check whether it is enabled hereafter with <code>::Enabled()</code>.
-	<p/>
+	The usage pattern should be self evident: if you managed to create your device with hardware raytracing call <code>::Enable(...)</code> and check whether it is enabled hereafter with <code>::Enabled()</code>.<p/>
+	Please see comments in <span style="color: red">red</span> regarding queried maximum ray recursions.
 	<div class="panel-holder">
 		<div class="left-panel">
 			<div class="panel-heading"><h2>Before...</h2></div>
@@ -264,7 +264,7 @@ void NVIDIA_RTX::RTXInstance::Enable(InstanceClass & inpInstance)
 
 	raytracingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV;
 	raytracingProperties.pNext = nullptr;
-	raytracingProperties.maxRecursionDepth = 8;
+	raytracingProperties.maxRecursionDepth = 8; <span class="nocode" style="color: red">/* This can be as high as 31 (all nVidia RTX cards) */</span>
 	raytracingProperties.shaderGroupHandleSize = 0;
 	VkPhysicalDeviceProperties2 props = {};
 	props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
@@ -345,7 +345,7 @@ void KHR_RT::RTInstance::Enable(InstanceClass & inpInstance)
 
 	raytracingPipelineProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
 	raytracingPipelineProperties.pNext = nullptr;
-	raytracingPipelineProperties.maxRayRecursionDepth = 8;
+	raytracingPipelineProperties.maxRayRecursionDepth = 8; <span class="nocode" style="color: red">/* This can be anywhere from 31 (all nVidia RTX cards)... to just 1 (AMD devices with certain software stacks) */</span>
 	raytracingPipelineProperties.shaderGroupHandleSize = 0;
 	VkPhysicalDeviceProperties2 props = {};
 	props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
