@@ -424,7 +424,7 @@ if (result != VK_SUCCESS) throw std::runtime_error("Could not allocate memory ch
 	My rendering abstractions (re-)create buffers with a call to <code>Buffer(...)</code>.
 	If you call <code>BufferClassWithStaging(...)</code> on a <code>BufferClass</code> instance, it will create a GPU-side-only buffer using a temporary staging buffer.
 	It will no longer have any host-side visibility.
-	We have new buffer usage modes and <code>USAGE_DEVICE_ADDRESS</code> will decide whether or not we'll ask the memory manager to make our buffer on memory objects dedicated to ray-tracing.
+	We have new buffer usage modes and <code>USAGE_DEVICE_ADDRESS</code> will decide whether or not we'll ask the memory manager to make our buffer on memory objects dedicated to ray-tracing(, see comments in <span style="color: red">red</span>).
 	<code>BufferClassWithStaging(...)</code> is not used here and is only provided for reference. It doesn't change due to this transition.
 	<p/>
 	<div class="panel-holder">
@@ -479,6 +479,7 @@ void BufferClass::Buffer(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, B
 
 	try
 	{
+		<span class="nocode" style="color: red">/* Please note the buffer flags passed */</span>
 		subAllocId = AllocMem(inpInstance.device, allocInfo, memReqs, BUFFER, &memPtr, &offset, &len);
 		typeForSubAlloc = allocInfo.memoryTypeIndex;
 		haveSubAlloc = true;
@@ -584,6 +585,7 @@ void BufferClass::Buffer(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, B
 
 	try
 	{
+		<span class="nocode" style="color: red">/* Please note the buffer flags passed */</span>
 		subAllocId = AllocMem(inpInstance.device, allocInfo, memReqs, ((usage & USAGE_DEVICE_ADDRESS) != 0) ? DEV_ADDRESS : BUFFER, &memPtr, &offset, &len);
 		typeForSubAlloc = allocInfo.memoryTypeIndex;
 		haveSubAlloc = true;
@@ -1557,7 +1559,7 @@ void KHR_RT::RTScene::MarkSceneOld()
 	</div>
 	<h1>Raytracing Pipelines</h1>
 	This section is interesting. Because in truth there were three transitions and not two. It seems like originally there were no alignment issues to be cognizant of with the VK_NV_raytracing extensions.<p/>
-	I suspect -- and this is just a hunch -- that with VK_KHR_raytracing's debug layer being hashed out, nVidia had to retroactively change some of their own requirements to enforce alignment.<p/>
+	I suspect -- and this is just a hunch -- that with VK_KHR_raytracing's debug layer being hashed out, nVidia had to retroactively change some of their own requirements to enforce alignment(, see comments in <span style="color: red">red</span>).<p/>
 	This effectively stayed with VK_KHR_raytracing and the final change was minimal.
 	<div class="panel-holder">
 		<div class="left-panel-third">
@@ -1635,6 +1637,7 @@ NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass(InstanceClass & renderI
 	if (result != VK_SUCCESS) { ErasePipelineState(); throw std::runtime_error("Could not create rtx pipeline"); }
 	haveRTXPipeline = true;
 
+	<span class="nocode" style="color: red">/* We were not aligning here... */</span>
 	uint32_t shaderBindingTableSize = RTXInstance::raytracingProperties.shaderGroupHandleSize * (uint32_t)shaderGroups.size();
 
 	shaderBindingTable.Buffer(MEMORY_HOST_VISIBLE, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_SRC, Instance, nullptr, shaderBindingTableSize);
@@ -1735,6 +1738,7 @@ NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass(InstanceClass & renderI
 	if (result != VK_SUCCESS) { ErasePipelineState(); throw std::runtime_error("Could not create rtx pipeline"); }
 	haveRTXPipeline = true;
 
+	<span class="nocode" style="color: red">/* We are now aligning! */</span>
 	unsigned int sbtChunkSize = (unsigned int)ceil((double)RTXInstance::raytracingProperties.shaderGroupHandleSize / (double)RTXInstance::raytracingProperties.shaderGroupBaseAlignment) * RTXInstance::raytracingProperties.shaderGroupBaseAlignment;
 
 	uint32_t shaderBindingTableSize = RTXInstance::raytracingProperties.shaderGroupHandleSize * (uint32_t)shaderGroups.size();
@@ -1842,6 +1846,7 @@ KHR_RT::RTPipelineStateClass::RTPipelineStateClass(InstanceClass & renderInst, D
 	if (result != VK_SUCCESS) { ErasePipelineState(); throw std::runtime_error("Could not create rt pipeline"); }
 	haveRTPipeline = true;
 
+	<span class="nocode" style="color: red">/* Aligning as per the spec. */</span>
 	unsigned int sbtChunkSize = (RTInstance::raytracingPipelineProperties.shaderGroupHandleSize + (RTInstance::raytracingPipelineProperties.shaderGroupBaseAlignment - 1)) & (~(RTInstance::raytracingPipelineProperties.shaderGroupBaseAlignment - 1));
 
 	uint32_t shaderBindingTableSize = RTInstance::raytracingPipelineProperties.shaderGroupHandleSize * (uint32_t)shaderGroups.size();
