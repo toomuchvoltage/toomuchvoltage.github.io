@@ -106,7 +106,6 @@ deviceFeatures.fragmentStoresAndAtomics = VK_TRUE;
 
 VkPhysicalDeviceDescriptorIndexingFeaturesEXT deviceDescriptorIndexingFeature = {};
 deviceDescriptorIndexingFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
-deviceDescriptorIndexingFeature.pNext = VK_NULL_HANDLE;
 deviceDescriptorIndexingFeature.descriptorBindingVariableDescriptorCount = VK_TRUE;
 deviceDescriptorIndexingFeature.runtimeDescriptorArray = VK_TRUE;
 deviceDescriptorIndexingFeature.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
@@ -151,7 +150,6 @@ deviceFeatures.fragmentStoresAndAtomics = VK_TRUE;
 
 VkPhysicalDeviceAccelerationStructureFeaturesKHR vkPhysicalDeviceAccelerationStructureFeatures = {};
 vkPhysicalDeviceAccelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
-vkPhysicalDeviceAccelerationStructureFeatures.pNext = VK_NULL_HANDLE;
 vkPhysicalDeviceAccelerationStructureFeatures.accelerationStructure = VK_TRUE;
 vkPhysicalDeviceAccelerationStructureFeatures.accelerationStructureCaptureReplay = VK_FALSE;
 vkPhysicalDeviceAccelerationStructureFeatures.accelerationStructureHostCommands = VK_FALSE;
@@ -263,7 +261,6 @@ void NVIDIA_RTX::RTXInstance::Enable(InstanceClass & inpInstance)
 	vkGetAccelerationStructureHandleNV = reinterpret_cast<PFN_vkGetAccelerationStructureHandleNV>(vkGetDeviceProcAddr(inpInstance.device, "vkGetAccelerationStructureHandleNV"));
 
 	raytracingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV;
-	raytracingProperties.pNext = nullptr;
 	raytracingProperties.maxRecursionDepth = 8; <span class="nocode" style="color: red">/* This can be as high as 31 (all nVidia RTX cards) */</span>
 	raytracingProperties.shaderGroupHandleSize = 0;
 	VkPhysicalDeviceProperties2 props = {};
@@ -344,7 +341,6 @@ void KHR_RT::RTInstance::Enable(InstanceClass & inpInstance)
 	vkGetRayTracingShaderGroupHandlesKHR = reinterpret_cast<PFN_vkGetRayTracingShaderGroupHandlesKHR>(vkGetDeviceProcAddr(inpInstance.device, "vkGetRayTracingShaderGroupHandlesKHR"));
 
 	raytracingPipelineProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
-	raytracingPipelineProperties.pNext = nullptr;
 	raytracingPipelineProperties.maxRayRecursionDepth = 8; <span class="nocode" style="color: red">/* This can be anywhere from 31 (all nVidia RTX cards)... to just 1 (AMD devices with certain software stacks) */</span>
 	raytracingPipelineProperties.shaderGroupHandleSize = 0;
 	VkPhysicalDeviceProperties2 props = {};
@@ -409,7 +405,6 @@ VkMemoryAllocateFlagsInfo memFlagInfo = {};
 if (RTInstance::Enabled() && memoryMapType == DEV_ADDRESS) // Requested chunk is an RT-type chunk... requester needs device address
 {
 	memFlagInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO_KHR;
-	memFlagInfo.pNext = VK_NULL_HANDLE;
 	memFlagInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
 	memFlagInfo.deviceMask = 0u;
 	allocInfo.pNext = &memFlagInfo;
@@ -461,7 +456,6 @@ void BufferClass::Buffer(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, B
 	VkBufferCreateInfo bufferInfo = {};
 	allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.pNext = VK_NULL_HANDLE;
 	allocInfo.allocationSize = 0;
 	allocInfo.memoryTypeIndex = 0;
 
@@ -567,7 +561,6 @@ void BufferClass::Buffer(MEMORY_OPTIONS inpMemOpts, BUFFER_SHARING inpSharing, B
 	VkBufferCreateInfo bufferInfo = {};
 	allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.pNext = VK_NULL_HANDLE;
 	allocInfo.allocationSize = 0;
 	allocInfo.memoryTypeIndex = 0;
 
@@ -670,7 +663,6 @@ VkDeviceSize NVIDIA_RTX::RTXAccelStruct::GetScratchBufferSize(VkAccelerationStru
 
 	VkAccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo = {};
 	memoryRequirementsInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
-	memoryRequirementsInfo.pNext = nullptr;
 	memoryRequirementsInfo.accelerationStructure = handle;
 	memoryRequirementsInfo.type = updateAction ? VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_UPDATE_SCRATCH_NV : VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_BUILD_SCRATCH_NV;
 
@@ -687,10 +679,8 @@ void NVIDIA_RTX::RTXAccelStruct::CreateAccelStruct(bool isBlas, VkGeometryNV * i
 
 	VkAccelerationStructureCreateInfoNV accelerationStructureInfo = {};
 	accelerationStructureInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_NV;
-	accelerationStructureInfo.pNext = nullptr;
 	accelerationStructureInfo.compactedSize = 0;
 	accelerationStructureInfo.info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
-	accelerationStructureInfo.info.pNext = NULL;
 	accelerationStructureInfo.info.type = isBlas ? VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_NV : VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV;
 	accelerationStructureInfo.info.flags = VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_NV;
 	accelerationStructureInfo.info.instanceCount = isBlas ? 0 : (uint32_t)instanceData->size();
@@ -703,7 +693,6 @@ void NVIDIA_RTX::RTXAccelStruct::CreateAccelStruct(bool isBlas, VkGeometryNV * i
 
 	VkAccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo = {};
 	memoryRequirementsInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
-	memoryRequirementsInfo.pNext = nullptr;
 	memoryRequirementsInfo.accelerationStructure = accelStruct;
 	memoryRequirementsInfo.type = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_OBJECT_NV;
 
@@ -712,7 +701,6 @@ void NVIDIA_RTX::RTXAccelStruct::CreateAccelStruct(bool isBlas, VkGeometryNV * i
 
 	VkMemoryAllocateInfo memoryAllocateInfo = {};
 	memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	memoryAllocateInfo.pNext = nullptr;
 	memoryAllocateInfo.allocationSize = memoryRequirements.memoryRequirements.size;
 	getMemoryType(ptrToInstance, memoryRequirements.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &memoryAllocateInfo.memoryTypeIndex);
 	try
@@ -729,7 +717,6 @@ void NVIDIA_RTX::RTXAccelStruct::CreateAccelStruct(bool isBlas, VkGeometryNV * i
 
 	VkBindAccelerationStructureMemoryInfoNV bindInfo = {};
 	bindInfo.sType = VK_STRUCTURE_TYPE_BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_NV;
-	bindInfo.pNext = nullptr;
 	bindInfo.accelerationStructure = accelStruct;
 	bindInfo.memory = memPtr;
 	bindInfo.memoryOffset = offset;
@@ -748,7 +735,6 @@ void NVIDIA_RTX::RTXAccelStruct::SubmitCreateAccelStruct(bool isBlas, VkGeometry
 
 	VkAccelerationStructureInfoNV asInfo = {};
 	asInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
-	asInfo.pNext = NULL;
 	asInfo.type = isBlas ? VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_NV : VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV;
 	asInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_NV;
 
@@ -823,21 +809,15 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 	{
 		VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeomInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR };
 		accelerationStructureBuildGeomInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
-		accelerationStructureBuildGeomInfo.pNext = VK_NULL_HANDLE;
 		accelerationStructureBuildGeomInfo.geometryCount = 1;
 		accelerationStructureBuildGeomInfo.pGeometries = inpGeom;
-		accelerationStructureBuildGeomInfo.ppGeometries = VK_NULL_HANDLE;
 		accelerationStructureBuildGeomInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
 		accelerationStructureBuildGeomInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-		accelerationStructureBuildGeomInfo.srcAccelerationStructure = VK_NULL_HANDLE;
-		accelerationStructureBuildGeomInfo.dstAccelerationStructure = VK_NULL_HANDLE;
 
 		VkAccelerationStructureBuildSizesInfoKHR sizeInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
-		sizeInfo.pNext = VK_NULL_HANDLE;
 		RTInstance::vkGetAccelerationStructureBuildSizesKHR(Instance.device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeomInfo, &inpGeomOffset->primitiveCount, &sizeInfo);
 
 		VkAccelerationStructureCreateInfoKHR createInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR };
-		createInfo.pNext = VK_NULL_HANDLE;
 		createInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
 		createInfo.size = sizeInfo.accelerationStructureSize;
 
@@ -851,7 +831,6 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 
 		BufferClass *curScratchBuffer = new BufferClass(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT | USAGE_SSBO, *ptrToInstance, nullptr, (unsigned int)sizeInfo.buildScratchSize);
 		VkBufferDeviceAddressInfo scratchBufferInfo{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
-		scratchBufferInfo.pNext = VK_NULL_HANDLE;
 		scratchBufferInfo.buffer = curScratchBuffer->buffer;
 		VkDeviceAddress scratchAddress = RTInstance::vkGetBufferDeviceAddressKHR(Instance.device, &scratchBufferInfo);
 
@@ -897,7 +876,6 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 		accelerationStructureBuildGeomInfo.pGeometries = &topASGeometry;
 		accelerationStructureBuildGeomInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
 		accelerationStructureBuildGeomInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-		accelerationStructureBuildGeomInfo.srcAccelerationStructure = VK_NULL_HANDLE;
 		uint32_t instanceCount = (uint32_t)instanceData->size();
 		VkAccelerationStructureBuildSizesInfoKHR sizeInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
 		RTInstance::vkGetAccelerationStructureBuildSizesKHR(Instance.device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeomInfo, &instanceCount, &sizeInfo);
@@ -912,7 +890,6 @@ void KHR_RT::RTAccelStruct::CreateAccelStruct(bool isBlas, VkAccelerationStructu
 		VkResult result = RTInstance::vkCreateAccelerationStructureKHR(Instance.device, &createInfo, nullptr, &accelStruct);
 		if (result != VK_SUCCESS) { RemovePast(); throw std::runtime_error("Could not create accel struct"); }
 		hasAccelStruct = true;
-		accelerationStructureBuildGeomInfo.srcAccelerationStructure = VK_NULL_HANDLE;
 		accelerationStructureBuildGeomInfo.dstAccelerationStructure = accelStruct;
 
 		BufferClass *curScratchBuffer = new BufferClass(MEMORY_DEVICE_LOCAL, SHARING_EXCLUSIVE, MODE_CREATE, USAGE_DEVICE_ADDRESS | USAGE_ACCEL_STRUCT | USAGE_SSBO, *ptrToInstance, nullptr, (unsigned int)sizeInfo.buildScratchSize);
@@ -994,7 +971,6 @@ void KHR_RT::RTAccelStruct::UpdateAccelStruct(bool isBlas, VkAccelerationStructu
 		accelerationStructureBuildGeomInfo.pGeometries = &topASGeometry;
 		accelerationStructureBuildGeomInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR;
 		accelerationStructureBuildGeomInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-		accelerationStructureBuildGeomInfo.srcAccelerationStructure = VK_NULL_HANDLE;
 		uint32_t instanceCount = (uint32_t)instanceData->size();
 		VkAccelerationStructureBuildSizesInfoKHR sizeInfo{ VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
 		RTInstance::vkGetAccelerationStructureBuildSizesKHR(Instance.device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeomInfo, &instanceCount, &sizeInfo);
@@ -1069,20 +1045,16 @@ void NVIDIA_RTX::RTXGeometry::SetGeom(BufferClass & vertBuffer, unsigned int ver
 
 	traceGeom = {};
 	traceGeom.sType = VK_STRUCTURE_TYPE_GEOMETRY_NV;
-	traceGeom.pNext = nullptr;
 	traceGeom.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_NV;
 	traceGeom.geometry.triangles.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
-	traceGeom.geometry.triangles.pNext = nullptr;
 	traceGeom.geometry.triangles.vertexData = vertBuffer.buffer;
 	traceGeom.geometry.triangles.vertexOffset = 0;
 	traceGeom.geometry.triangles.vertexCount = vertBuffer.getSize() / vertexSize;
 	traceGeom.geometry.triangles.vertexStride = vertexSize;
 	traceGeom.geometry.triangles.vertexFormat = (VkFormat)R32G32B32F;
-	traceGeom.geometry.triangles.indexData = VK_NULL_HANDLE;
 	traceGeom.geometry.triangles.indexOffset = 0;
 	traceGeom.geometry.triangles.indexCount = 0;
 	traceGeom.geometry.triangles.indexType = VK_INDEX_TYPE_NONE_NV;
-	traceGeom.geometry.triangles.transformData = VK_NULL_HANDLE;
 	traceGeom.geometry.triangles.transformOffset = 0;
 	traceGeom.geometry.aabbs = { }; // Do not write any of these two lines... remove!
 	traceGeom.geometry.aabbs.sType = VK_STRUCTURE_TYPE_GEOMETRY_AABB_NV; // Yeah, remove this too!
@@ -1142,16 +1114,13 @@ void KHR_RT::RTGeometry::SetGeom(BufferClass & vertBuffer, unsigned int vertexSi
 
 	VkBufferDeviceAddressInfo bufDevAdInfo = {};
 	bufDevAdInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-	bufDevAdInfo.pNext = VK_NULL_HANDLE;
 	bufDevAdInfo.buffer = vertBuffer.buffer;
 	bufferDeviceAddress = RTInstance::vkGetBufferDeviceAddressKHR(Instance.device, &bufDevAdInfo);
 
 	traceGeom = {};
 	traceGeom.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
-	traceGeom.pNext = nullptr;
 	traceGeom.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
 	traceGeom.geometry.triangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
-	traceGeom.geometry.triangles.pNext = nullptr;
 	traceGeom.geometry.triangles.vertexFormat = (VkFormat)R32G32B32F;
 	traceGeom.geometry.triangles.vertexData.deviceAddress = bufferDeviceAddress;
 	traceGeom.geometry.triangles.vertexStride = vertexSize;
@@ -1594,7 +1563,6 @@ NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass(InstanceClass & renderI
 
 	VkPipelineLayoutCreateInfo pPipelineLayoutCreateInfo = {};
 	pPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pPipelineLayoutCreateInfo.pNext = VK_NULL_HANDLE;
 	pPipelineLayoutCreateInfo.setLayoutCount = (uint32_t)DescSetLayout.descriptorSetLayouts.size();
 	pPipelineLayoutCreateInfo.pSetLayouts = DescSetLayout.descriptorSetLayouts.data();
 
@@ -1695,7 +1663,6 @@ NVIDIA_RTX::RTXPipelineStateClass::RTXPipelineStateClass(InstanceClass & renderI
 
 	VkPipelineLayoutCreateInfo pPipelineLayoutCreateInfo = {};
 	pPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pPipelineLayoutCreateInfo.pNext = VK_NULL_HANDLE;
 	pPipelineLayoutCreateInfo.setLayoutCount = (uint32_t)DescSetLayout.descriptorSetLayouts.size();
 	pPipelineLayoutCreateInfo.pSetLayouts = DescSetLayout.descriptorSetLayouts.data();
 
@@ -1803,7 +1770,6 @@ KHR_RT::RTPipelineStateClass::RTPipelineStateClass(InstanceClass & renderInst, D
 
 	VkPipelineLayoutCreateInfo pPipelineLayoutCreateInfo = {};
 	pPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pPipelineLayoutCreateInfo.pNext = VK_NULL_HANDLE;
 	pPipelineLayoutCreateInfo.setLayoutCount = (uint32_t)DescSetLayout.descriptorSetLayouts.size();
 	pPipelineLayoutCreateInfo.pSetLayouts = DescSetLayout.descriptorSetLayouts.data();
 
