@@ -1124,17 +1124,14 @@ void KHR_RT::RTGeometry::SetGeom(BufferClass & vertBuffer, unsigned int vertexSi
 	traceGeom.geometry.triangles.vertexFormat = (VkFormat)R32G32B32F;
 	traceGeom.geometry.triangles.vertexData.deviceAddress = bufferDeviceAddress;
 	traceGeom.geometry.triangles.vertexStride = vertexSize;
-	traceGeom.geometry.triangles.maxVertex = vertBuffer.getSize() / vertexSize;
+	traceGeom.geometry.triangles.maxVertex = (vertBuffer.getSize() / vertexSize) - 1;
 	traceGeom.geometry.triangles.indexData.deviceAddress = (VkDeviceAddress)0;
 	traceGeom.geometry.triangles.indexType = VK_INDEX_TYPE_NONE_KHR;
 	traceGeom.geometry.triangles.transformData.deviceAddress = (VkDeviceAddress)0;
 	if (!isAlphaKeyed) traceGeom.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
 
 	traceGeomOffset = {};
-	traceGeomOffset.firstVertex = 0;
 	traceGeomOffset.primitiveCount = vertBuffer.getSize() / (vertexSize * 3);
-	traceGeomOffset.primitiveOffset = 0;
-	traceGeomOffset.transformOffset = 0;
 
 	dirty = true;
 }
