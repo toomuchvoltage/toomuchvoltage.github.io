@@ -611,7 +611,7 @@ void BufferClass::BufferClassWithStaging(BUFFER_SHARING inpSharing, BUFFER_MODE 
 	totalDataSize = inpDataSize;
 
 	BufferClass bufferStaging(MEMORY_HOST_VISIBLE, inpSharing, inpMode, USAGE_SRC, inpInstance, inpData, totalDataSize);
-	new (this) BufferClass(MEMORY_DEVICE_LOCAL, inpSharing, inpMode, USAGE_DST | inpUsage, inpInstance, nullptr, totalDataSize);
+	Buffer(MEMORY_DEVICE_LOCAL, inpSharing, inpMode, USAGE_DST | inpUsage, inpInstance, nullptr, totalDataSize);
 
 	VkBufferCopy copyRegion = {};
 
